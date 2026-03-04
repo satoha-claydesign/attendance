@@ -1,0 +1,86 @@
+h1{
+    color: transparent;
+}
+
+.card {
+    margin: 20px auto 60px;
+    width: 1440px;
+}
+.card-body {
+    /* padding: 20px 0; */
+    width: 600px;
+    margin: 0 auto;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+}
+
+.state {
+    width: 100px;
+    margin: auto;
+    background: #C8C8C8;
+    height: 40px;
+    padding: 8px;
+    border-radius: 20px;
+    margin-bottom: 40px;
+}
+
+.state-button {
+    margin: 0;
+}
+
+.date {
+    font-size: 40px;
+}
+
+.current-time {
+    font-size: 80px;
+    font-weight: bold;
+    margin: 40px 0;
+}
+
+.button-form>ul {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 0;
+}
+
+li {
+    list-style: none;
+}
+
+.disabled {
+    display: none;
+}
+
+.btn-primary {
+    background: #000;
+    color: #fff;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 10px;
+    width: 220px;
+    height: 76px;
+    border-radius: 20px;
+    cursor: pointer;
+}
+
+
+.btn-break {
+    background: #fff;
+    color: #000;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 10px;
+    width: 220px;
+    height: 76px;
+    border-radius: 20px;
+    cursor: pointer;
+}
+
+.punch-out-message {
+    font-size: 20px;
+    color: #000;
+    margin-top: 20px;
+}
