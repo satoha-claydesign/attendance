@@ -1,0 +1,160 @@
+/* attendancelist.css - styles for attendance list page */
+
+.main-container{
+    background-color: #F0EFF2;
+    padding-top: 100px;
+}
+.attendance-list-container{
+    max-width: 980px;
+    margin: 0 auto;
+}
+
+.attendance-list-title{
+    font-size: 32px;
+    color: #222;
+    margin: 0; 
+}
+
+/* decorative vertical bar to the left of the title */
+h2.attendance-list-title::before{
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 1.6em;
+    background: #000;
+    margin-right: 12px;
+    vertical-align: middle;
+}
+
+.attendance-table{
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(16,24,40,0.05);
+}
+
+.attendance-table thead th{
+  text-align: left;
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #374151;
+  border-bottom: 1px solid #e6edf3;
+}
+
+.attendance-table tbody td{
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #111827;
+}
+
+.attendance-table tbody tr:hover td{
+  background: #fbfdff;
+}
+
+.attendance-badge{
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+.attendance-link{
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 600;
+}
+.attendance-link:hover{ text-decoration: underline; }
+
+/* responsive */
+@media (max-width: 720px){
+  .attendance-table thead{ display: none; }
+  .attendance-table, .attendance-table tbody, .attendance-table tr, .attendance-table td{ display: block; width: 100%; }
+  .attendance-table td{ box-sizing: border-box; padding: 10px; }
+  .attendance-table td[data-label]{ padding-left: 50%; position: relative; }
+  .attendance-table td[data-label]::before{ content: attr(data-label); position: absolute; left: 12px; top: 10px; font-weight: 700; }
+}
+
+/* month navigation */
+.month-nav{
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    align-items: center;
+    margin: 40px 0;
+    background: #fff;
+    height: 60px;
+    border-radius: 5px;
+    padding: 0 12px;
+}
+.month-link{
+    color: #737373;
+    padding: 6px 10px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* prev: arrow on the left */
+.month-link.prev::before{
+  content: "";
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  background-color: transparent;
+  margin-right: 8px;
+  vertical-align: middle;
+  opacity: 0.3;
+}
+
+/* next: arrow on the right (use ::after) */
+.month-link.next::after{
+  content: "";
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  background-color: transparent;
+  margin-left: 8px;
+  vertical-align: middle;
+  opacity: 0.3;
+  transform: rotate(180deg);
+}
+
+.month-link:hover{ background: #eef2ff; color: #0f172a; }
+.month-current{
+    font-size: 24px;
+  font-weight: 700;
+  color: #000;
+  padding: 6px 12px;
+  border-radius: 6px;
+  text-decoration: none;
+}
+
+/* calendar icon to the left of the current month */
+.month-current{
+  position: relative;
+  padding-left: 36px; /* space for icon */
+}
+.month-current::before{
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 25px;
+    height: 25px;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+}
+

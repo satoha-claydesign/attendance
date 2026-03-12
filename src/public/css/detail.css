@@ -1,0 +1,46 @@
+/* detail.css - styles for attendance detail page */
+
+.attendance-detail .table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.attendance-detail .table th,
+.attendance-detail .table td {
+    padding: 0.75rem;
+    border: 1px solid #dee2e6;
+    vertical-align: top;
+}
+.attendance-detail .break-row td {
+    background: #f8f9fa;
+    color: #333;
+}
+.attendance-detail .break-time {
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .attendance-detail .table thead {
+    display: none;
+  }
+  .attendance-detail .table, .attendance-detail .table tbody, .attendance-detail .table tr, .attendance-detail .table td {
+    display: block;
+    width: 100%;
+  }
+  .attendance-detail .table tr { margin-bottom: 1rem; }
+  .attendance-detail .table td {
+    text-align: right;
+    padding-left: 50%;
+    position: relative;
+  }
+  .attendance-detail .table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0;
+    width: 45%;
+    padding-left: 0.75rem;
+    font-weight: 600;
+    text-align: left;
+  }
+}

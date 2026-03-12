@@ -19,6 +19,45 @@ class TimestampsController extends Controller
     return view('attendance.index', compact('timestamp'));
     }
 
+    /**
+     * Show list of timestamps for authenticated user.
+     */
+    public function list(\Illuminate\Http\Request $request)
+    {
+        // month query expected in format YYYY-MM (e.g. 2026-03). Fallback to current month.
+        $monthQuery = $request->query('month');
+        try {
+            $current = $monthQuery ? Carbon::createFromFormat('Y-m', $monthQuery)->startOfMonth() : Carbon::today()->startOfMonth();
+        } catch (\Exception $e) {
+            $current = Carbon::today()->startOfMonth();
+        }
+
+        $start = $current->copy()->startOfMonth()->toDateString();
+        $end = $current->copy()->endOfMonth()->toDateString();
+
+        $attendances = Timestamp::with('breakTime')
+            ->where('user_id', auth()->id())
+            ->whereBetween('work_date', [$start, $end])
+            ->orderBy('work_date', 'desc')
+            ->get();
+
+        // Key attendances by work_date for quick lookup in view
+        $attendanceByDate = $attendances->keyBy('work_date');
+
+        // Build list of days in month (ascending: start -> end)
+        $numDays = $current->daysInMonth;
+        $days = collect();
+        for ($i = 0; $i < $numDays; $i++) {
+            $days->push($current->copy()->addDays($i));
+        }
+        // keep ascending order (1日 -> 月末)
+
+        $prev = $current->copy()->subMonth();
+        $next = $current->copy()->addMonth();
+
+        return view('attendance.list', compact('attendances', 'attendanceByDate', 'days', 'current', 'prev', 'next'));
+    }
+
     public function punchIn()
     {
         $user = Auth::user();

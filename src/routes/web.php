@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\TimestampsController;
+use App\Http\Controllers\DetailController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,9 +31,12 @@ Route::prefix('admin')->group(function () {
 
 Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/attendance', [TimestampsController::class, 'index'])->name('attendance.index');
+    Route::get('/attendance/list', [TimestampsController::class, 'list'])->name('attendance.list');
     Route::post('/attendance/punchin', [TimestampsController::class, 'punchIn'])->name('attendance.punchin');
     Route::post('/attendance/punchout', [TimestampsController::class, 'punchOut'])->name('attendance.punchout');
     Route::post('/attendance/breakin', [TimestampsController::class, 'breakIn'])->name('attendance.breakin');
     Route::post('/attendance/breakout', [TimestampsController::class, 'breakOut'])->name('attendance.breakout');
+    // accept optional id so links can be generated like route('attendance.detail', $id)
+    Route::get('/attendance/detail/{id?}', [DetailController::class, 'detail'])->name('attendance.detail');
 });
 

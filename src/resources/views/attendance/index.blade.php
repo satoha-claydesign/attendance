@@ -45,7 +45,7 @@
                                     <button type="submit" class="btn btn-primary">退勤</button>
                                 </form>
                             </li>
-                            <li class="{{ (isset($timestamp) &&  $timestamp->breakTime()->count() == 0) ? '' : 'disabled' }}">
+                            <li class="{{ (isset($timestamp) && $timestamp->punchIn && !$timestamp->punchOut &&  $timestamp->breakTime()->whereNull('breakOut')->count() == 0) ? '' : 'disabled' }}">
                                 <form action="{{ route('attendance.breakin') }}" method="POST">
                                     @csrf
                                     @method('POST')
