@@ -11,7 +11,7 @@ class BreakTime extends Model
 {
     use HasFactory;
     protected $table = 'breaks';
-    protected $fillable = ['timestamp_id', 'work_date', 'breakIn', 'breakOut'];
+    protected $fillable = ['timestamp_id', 'breakIn', 'breakOut'];
     protected $dates = ['breakIn', 'breakOut'];
 
     /**
@@ -20,7 +20,7 @@ class BreakTime extends Model
      */
     public function timestamp()
     {
-        $this->belongsTo(Timestamp::class);
+        return $this->belongsTo(Timestamp::class);
     }
 
 }

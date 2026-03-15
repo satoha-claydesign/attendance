@@ -16,6 +16,6 @@ class AdminLoginResponse implements LoginResponseContract
     {
         return $request->wantsJson()
             ? response()->json(['two_factor' => false])
-            : redirect()->intended('admin/dashboard'); // ログイン後に遷移させたいリダイレクト先を指定
+            : redirect()->intended('admin/attendance/list'); // ログイン後は当日の勤怠一覧へ遷移させる
     }
 }

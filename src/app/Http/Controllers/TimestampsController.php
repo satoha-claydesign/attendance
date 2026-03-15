@@ -7,6 +7,7 @@ use Auth;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Timestamp;
+use App\Models\Approval;
 
 class TimestampsController extends Controller
 {
@@ -118,5 +119,55 @@ class TimestampsController extends Controller
             }
         }
         return redirect()->back();
+    }
+
+    /**
+     * Create an approval request for changes to a timestamp instead of applying immediately.
+     * The admin will approve and apply changes later.
+     */
+    public function update(Request $request, $id)
+    {
+        $user = auth()->user();
+
+        $timestamp = Timestamp::with('breakTime')->where('id', $id)->where('user_id', $user->id)->first();
+        if (! $timestamp) {
+            return redirect()->back()->with('error', '対象の勤怠が見つかりません。');
+        }
+
+        $validated = $request->validate([
+            'punch_in' => 'nullable|date_format:H:i',
+            'punch_out' => 'nullable|date_format:H:i',
+            'break1_start' => 'nullable|date_format:H:i',
+            'break1_end' => 'nullable|date_format:H:i',
+            'break2_start' => 'nullable|date_format:H:i',
+            'break2_end' => 'nullable|date_format:H:i',
+            'note' => 'nullable|string|max:1000',
+        ]);
+
+        $workDate = $timestamp->work_date;
+
+        // Build payload representing requested changes
+        $payload = [
+            'punch_in' => $validated['punch_in'] ?? null,
+            'punch_out' => $validated['punch_out'] ?? null,
+            'breaks' => [
+                [ 'start' => $validated['break1_start'] ?? null, 'end' => $validated['break1_end'] ?? null ],
+                [ 'start' => $validated['break2_start'] ?? null, 'end' => $validated['break2_end'] ?? null ],
+            ],
+        ];
+
+        // Create approval record (status: pending)
+        Approval::create([
+            'user_id' => $user->id,
+            'timestamp_id' => $timestamp->id,
+            'name' => $user->name ?? null,
+            'target_date' => $workDate,
+            'status' => 'pending',
+            'reason' => $validated['note'] ?? null,
+            'payload' => $payload,
+            'details_link' => route('attendance.detail', $timestamp->id),
+        ]);
+
+        return redirect()->route('attendance.detail', $timestamp->id)->with('success', '変更を申請しました。管理者の承認をお待ちください。');
     }
 }

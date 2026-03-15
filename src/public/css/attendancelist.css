@@ -26,6 +26,18 @@ h2.attendance-list-title::before{
     vertical-align: middle;
 }
 
+.month-link.prev::before {
+  background-image: url('/storage/images/arrow.png');
+}
+
+.month-link.next::after {
+  background-image: url('/storage/images/arrow.png');
+}
+
+.month-current::before {
+  background-image: url('/storage/images/calender.png');
+}
+
 .attendance-table{
   width: 100%;
   border-collapse: collapse;
@@ -64,11 +76,13 @@ h2.attendance-list-title::before{
 }
 
 .attendance-link{
-  color: #2563eb;
+  color: #000;
   text-decoration: none;
   font-weight: 600;
 }
-.attendance-link:hover{ text-decoration: underline; }
+.attendance-link:hover{
+    text-decoration: none;
+}
 
 /* responsive */
 @media (max-width: 720px){

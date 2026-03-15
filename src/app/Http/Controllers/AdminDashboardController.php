@@ -9,6 +9,7 @@ class AdminDashboardController extends Controller
     //
     public function index()
     {
-        return view('admin.dashboard');
+        // Redirect admins to the daily attendance list upon login
+        return redirect('/admin/attendance/list');
     }
 }

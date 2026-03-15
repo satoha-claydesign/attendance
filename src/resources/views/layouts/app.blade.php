@@ -36,23 +36,47 @@
         <div class="header-utilities">
             <nav>
             <ul class="header-nav">
-                @if(Auth::check())
-                <li class="header-nav__item">
-                <a class="header-nav__link" href="/attendance">勤怠</a>
-                </li>
-                <li class="header-nav__item">
-                <a class="header-nav__link" href="/attendance/list">勤怠一覧</a>
-                </li>
-                <li class="header-nav__item">
-                <a class="header-nav__link" href="/stamp_correction_request/list">申請</a>
-                </li>
-                <li class="header-nav__item">
-                <form class="form" action="/logout" method="post">
-                    @csrf
-                    <button class="header-nav__link">ログアウト</button>
-                </form>
-                </li>
-                
+                @if(auth('admin')->check())
+                    <li class="header-nav__item">
+                        <a class="header-nav__link" href="{{ url('/admin/attendance/list') }}">勤怠一覧</a>
+                    </li>
+                    <li class="header-nav__item">
+                        <a class="header-nav__link" href="{{ url('/admin/staff/list') }}">スタッフ一覧</a>
+                    </li>
+                    <li class="header-nav__item">
+                        <a class="header-nav__link" href="{{ url('/stamp_correction_request/list') }}">申請一覧</a>
+                    </li>
+                    <li class="header-nav__item">
+                        @if(Route::has('admin.logout'))
+                            <form method="POST" action="{{ route('admin.logout') }}" style="display:inline">
+                                @csrf
+                                <button type="submit" class="header-nav__link" style="background:none;border:0;padding:0;cursor:pointer;">ログアウト</button>
+                            </form>
+                        @elseif(Route::has('logout'))
+                            <form method="POST" action="{{ route('logout') }}" style="display:inline">
+                                @csrf
+                                <button type="submit" class="header-nav__link" style="background:none;border:0;padding:0;cursor:pointer;">ログアウト</button>
+                            </form>
+                        @else
+                            <a class="header-nav__link" href="{{ url('/logout') }}">ログアウト</a>
+                        @endif
+                    </li>
+                @elseif(Auth::check())
+                    <li class="header-nav__item">
+                        <a class="header-nav__link" href="/attendance">勤怠</a>
+                    </li>
+                    <li class="header-nav__item">
+                        <a class="header-nav__link" href="/attendance/list">勤怠一覧</a>
+                    </li>
+                    <li class="header-nav__item">
+                        <a class="header-nav__link" href="/stamp_correction_request/list">申請</a>
+                    </li>
+                    <li class="header-nav__item">
+                        <form class="form" action="/logout" method="post">
+                            @csrf
+                            <button class="header-nav__link">ログアウト</button>
+                        </form>
+                    </li>
                 @endif
             </ul>
             </nav>

@@ -2,17 +2,11 @@
 
 @section('css')
 <link rel="stylesheet" href="{{ asset('css/attendancelist.css') }}">
-<style>
-/* inject arrow image URL for pseudo-element using Blade asset() */
-.month-link.prev::before{ background-image: url("{{ asset('storage/images/arrow.png') }}"); }
-.month-link.next::after{ background-image: url("{{ asset('storage/images/arrow.png') }}"); }
-.month-current::before{ background-image: url("{{ asset('storage/images/calender.png') }}"); }
-</style>
 @endsection
 
 @section('content')
 <div class="main-container">
-<div class="container mt-4 attendance-list-container">
+    <div class="container mt-4 attendance-list-container">
             <h2 class="attendance-list-title">勤怠一覧</h2>
 
                 <div class="month-nav">
@@ -55,7 +49,7 @@
                                 }
                             @endphp
                             <tr>
-                                <td data-label="日付">{{ $dateStr }}</td>
+                                                <td data-label="日付">{{ $day->locale('ja')->isoFormat('MM/DD (ddd)') }}</td>
                                 <td data-label="出勤">{{ $attendance->punchIn ? \Carbon\Carbon::parse($attendance->punchIn)->format('H:i') : '—' }}</td>
                                 <td data-label="退勤">{{ $attendance->punchOut ? \Carbon\Carbon::parse($attendance->punchOut)->format('H:i') : '—' }}</td>
                                 <td data-label="休憩">{{ $breakDisplay }}</td>
@@ -64,7 +58,7 @@
                             </tr>
                         @else
                             <tr>
-                                <td data-label="日付">{{ $dateStr }}</td>
+                                                <td data-label="日付">{{ $day->locale('ja')->isoFormat('MM/DD (ddd)') }}</td>
                                 <td data-label="出勤"> </td>
                                 <td data-label="退勤"> </td>
                                 <td data-label="休憩"> </td>
@@ -75,9 +69,7 @@
                     @endforeach
                 </tbody>
         </table>
-
     </div>
 </div>
-    
 @endsection
 

@@ -1,5 +1,32 @@
 /* detail.css - styles for attendance detail page */
 
+.main-container {
+    background-color: #F0EFF2;
+    padding: 100px 0;
+}
+
+.attendance-detail {
+    max-width: 980px;
+    margin: 0 auto;
+}
+
+.attendance-detail>h2 {
+    font-size: 32px;
+    color: #222;
+    margin: 0 0 60px;
+}
+
+/* decorative vertical bar to the left of the title */
+.attendance-detail>h2::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 1.6em;
+    background: #000;
+    margin-right: 12px;
+    vertical-align: middle;
+}
+
 .attendance-detail .table {
     width: 100%;
     border-collapse: collapse;

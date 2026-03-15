@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Timestamp;
+use App\Models\Approval;
 
 class DetailController extends Controller
 {
@@ -36,6 +37,22 @@ class DetailController extends Controller
             })->toArray();
         }
 
-        return view('attendance.detail', ['attendance' => $attendance]);
+        // Find any pending approval for this timestamp (or by date fallback)
+        $approval = null;
+        if ($attendance && $attendance->id) {
+            $approval = Approval::where('timestamp_id', $attendance->id)
+                ->where('status', 'pending')
+                ->latest()
+                ->first();
+        } else {
+            $date = $request->query('date', now()->format('Y-m-d'));
+            $approval = Approval::where('user_id', auth()->id())
+                ->where('target_date', $date)
+                ->where('status', 'pending')
+                ->latest()
+                ->first();
+        }
+
+        return view('attendance.detail', ['attendance' => $attendance, 'approval' => $approval]);
     }
 }
