@@ -134,26 +134,35 @@ class TimestampsController extends Controller
             return redirect()->back()->with('error', '対象の勤怠が見つかりません。');
         }
 
-        $validated = $request->validate([
+        $validated = $request->validate(array_merge([
             'punch_in' => 'nullable|date_format:H:i',
             'punch_out' => 'nullable|date_format:H:i',
-            'break1_start' => 'nullable|date_format:H:i',
-            'break1_end' => 'nullable|date_format:H:i',
-            'break2_start' => 'nullable|date_format:H:i',
-            'break2_end' => 'nullable|date_format:H:i',
             'note' => 'nullable|string|max:1000',
-        ]);
+        ],
+        // allow dynamic breaks: breaks.*.start, breaks.*.end
+        array_fill_keys(array_map(function($i){ return "breaks.$i.start"; }, range(0,9)), 'nullable|date_format:H:i')
+        ));
 
         $workDate = $timestamp->work_date;
 
         // Build payload representing requested changes
+        // collect breaks from input array (supports dynamic count)
+        $inputBreaks = $request->input('breaks', []);
+        $breaksPayload = [];
+        if (is_array($inputBreaks)) {
+            foreach ($inputBreaks as $b) {
+                $start = $b['start'] ?? null;
+                $end = $b['end'] ?? null;
+                if ($start || $end) {
+                    $breaksPayload[] = ['start' => $start, 'end' => $end];
+                }
+            }
+        }
+
         $payload = [
             'punch_in' => $validated['punch_in'] ?? null,
             'punch_out' => $validated['punch_out'] ?? null,
-            'breaks' => [
-                [ 'start' => $validated['break1_start'] ?? null, 'end' => $validated['break1_end'] ?? null ],
-                [ 'start' => $validated['break2_start'] ?? null, 'end' => $validated['break2_end'] ?? null ],
-            ],
+            'breaks' => $breaksPayload,
         ];
 
         // Create approval record (status: pending)

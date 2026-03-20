@@ -99,15 +99,14 @@ class AdminApprovalController extends Controller
             }
             $timestamp->save();
 
-            // Replace break records
-            $timestamp->breakTime()->delete();
+            // Append payload breaks to existing break records (do not delete existing)
             $breaks = $payload['breaks'] ?? [];
             foreach ($breaks as $b) {
                 if ((!empty($b['start'])) || (!empty($b['end']))) {
-                            $timestamp->breakTime()->create([
-                                'breakIn' => !empty($b['start']) ? Carbon::createFromFormat('Y-m-d H:i', $targetDate.' '.$b['start']) : null,
-                                'breakOut' => !empty($b['end']) ? Carbon::createFromFormat('Y-m-d H:i', $targetDate.' '.$b['end']) : null,
-                            ]);
+                    $timestamp->breakTime()->create([
+                        'breakIn' => !empty($b['start']) ? Carbon::createFromFormat('Y-m-d H:i', $targetDate.' '.$b['start']) : null,
+                        'breakOut' => !empty($b['end']) ? Carbon::createFromFormat('Y-m-d H:i', $targetDate.' '.$b['end']) : null,
+                    ]);
                 }
             }
 

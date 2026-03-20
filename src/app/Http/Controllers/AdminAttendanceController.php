@@ -59,15 +59,11 @@ class AdminAttendanceController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $validated = $request->validate([
+        $validated = $request->validate(array_merge([
             'punch_in' => 'nullable|date_format:H:i',
             'punch_out' => 'nullable|date_format:H:i',
-            'break1_start' => 'nullable|date_format:H:i',
-            'break1_end' => 'nullable|date_format:H:i',
-            'break2_start' => 'nullable|date_format:H:i',
-            'break2_end' => 'nullable|date_format:H:i',
             'note' => 'nullable|string|max:1000',
-        ]);
+        ], array_fill_keys(array_map(function($i){ return "breaks.$i.start"; }, range(0,9)), 'nullable|date_format:H:i')));
 
         $attendance = Timestamp::with('breakTime')->findOrFail($id);
 
@@ -82,18 +78,28 @@ class AdminAttendanceController extends Controller
             : null;
         $attendance->save();
 
-        // Replace break records
-        $attendance->breakTime()->delete();
-        $breaks = [
-            ['start' => $validated['break1_start'] ?? null, 'end' => $validated['break1_end'] ?? null],
-            ['start' => $validated['break2_start'] ?? null, 'end' => $validated['break2_end'] ?? null],
-        ];
-        foreach ($breaks as $b) {
-            if (!empty($b['start']) || !empty($b['end'])) {
-                $attendance->breakTime()->create([
-                    'breakIn' => !empty($b['start']) ? Carbon::createFromFormat('Y-m-d H:i', $workDate.' '.$b['start']) : null,
-                    'breakOut' => !empty($b['end']) ? Carbon::createFromFormat('Y-m-d H:i', $workDate.' '.$b['end']) : null,
-                ]);
+        // Update existing break records and append new ones if provided.
+        $inputBreaks = $request->input('breaks', []);
+        $currentBreaks = $attendance->breakTime()->orderBy('id')->get();
+        if (is_array($inputBreaks)) {
+            foreach ($inputBreaks as $i => $b) {
+                $start = $b['start'] ?? null;
+                $end = $b['end'] ?? null;
+                if (isset($currentBreaks[$i])) {
+                    // update existing
+                    $cb = $currentBreaks[$i];
+                    $cb->breakIn = $start ? Carbon::createFromFormat('Y-m-d H:i', $workDate.' '.$start) : null;
+                    $cb->breakOut = $end ? Carbon::createFromFormat('Y-m-d H:i', $workDate.' '.$end) : null;
+                    $cb->save();
+                } else {
+                    // append if any value provided
+                    if ($start || $end) {
+                        $attendance->breakTime()->create([
+                            'breakIn' => $start ? Carbon::createFromFormat('Y-m-d H:i', $workDate.' '.$start) : null,
+                            'breakOut' => $end ? Carbon::createFromFormat('Y-m-d H:i', $workDate.' '.$end) : null,
+                        ]);
+                    }
+                }
             }
         }
 

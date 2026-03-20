@@ -31,6 +31,15 @@
             $b1end = is_array($break1) ? ($break1['end'] ?? null) : ($break1->end ?? null);
             $b2start = is_array($break2) ? ($break2['start'] ?? null) : ($break2->start ?? $break2);
             $b2end = is_array($break2) ? ($break2['end'] ?? null) : ($break2->end ?? null);
+            // split date into year and month-day blocks
+            try {
+                $dateObj = \Carbon\Carbon::parse($date);
+                $dateYear = $dateObj->format('Y') . '年';
+                $dateMonthDay = $dateObj->format('m') . '月' . $dateObj->format('d') . '日';
+            } catch (\Exception $e) {
+                $dateYear = '';
+                $dateMonthDay = $date;
+            }
         @endphp
 
         @php
@@ -63,26 +72,44 @@
                     </tr>
                     <tr>
                         <th>対象日</th>
-                        <td>{{ $approval->target_date ?? $date }}</td>
+                        <td>
+                            <div class="date-blocks">
+                                <div class="block year-block">{{ isset($approval->target_date) ? \Carbon\Carbon::parse($approval->target_date)->format('Y') . '年' : $dateYear }}</div>
+                                <div class="block md-block">{{ isset($approval->target_date) ? \Carbon\Carbon::parse($approval->target_date)->format('m') . '月' . \Carbon\Carbon::parse($approval->target_date)->format('d') . '日' : $dateMonthDay }}</div>
+                            </div>
+                        </td>
                     </tr>
                     <tr>
                         <th>申請理由</th>
                         <td>{{ $approval->reason ?? '—' }}</td>
                     </tr>
                     <tr>
-                        <th>申請された出勤・退勤</th>
+                        <th>出勤・退勤</th>
                         <td>
-                            出勤: {{ $ap_punch_in ?? '—' }}
-                            &nbsp;&nbsp; 退勤: {{ $ap_punch_out ?? '—' }}
+                            <div class="blocks">
+                                <div class="block">
+                                    <div> {{ $ap_punch_in ?? '—' }}</div>
+                                    <span>〜</span>
+                                    <div> {{ $ap_punch_out ?? '—' }}</div>
+                                </div>
+                            </div>
                         </td>
                     </tr>
-                    <tr>
-                        <th>申請された休憩</th>
-                        <td>
-                            休憩1: {{ is_array($ap_b1) ? ($ap_b1['start'] ?? '—') . ' - ' . ($ap_b1['end'] ?? '—') : ($ap_b1 ?? '—') }}<br>
-                            休憩2: {{ is_array($ap_b2) ? ($ap_b2['start'] ?? '—') . ' - ' . ($ap_b2['end'] ?? '—') : ($ap_b2 ?? '—') }}
-                        </td>
-                    </tr>
+                    @php
+                        $ap_breaks = $ap_breaks ?? [];
+                    @endphp
+                    @foreach($ap_breaks as $i => $b)
+                        <tr>
+                            <th>{{ $i === 0 ? '休憩' : '休憩'.($i+1) }}</th>
+                            <td>
+                                <div class="blocks">
+                                    <div class="block">
+                                        <div>{{ is_array($b) ? (($b['start'] ?? '—') . ' - ' . ($b['end'] ?? '—')) : ($b ?? '—') }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
                     <tr>
                         <td colspan="2" class="text-end">
                             <a href="{{ url()->previous() }}" class="btn btn-secondary">戻る</a>
@@ -97,51 +124,75 @@
                 <table class="table table-bordered">
                     <tbody>
                         <tr>
-                            <th style="width:160px">名前</th>
+                            <th>名前</th>
                             <td>{{ $name }}</td>
                         </tr>
                         <tr>
                             <th>日付</th>
-                            <td>{{ $date }}</td>
+                            <td>
+                                <div class="date-blocks">
+                                    <div class="block year-block">{{ $dateYear }}</div>
+                                    <div class="block md-block">{{ $dateMonthDay }}</div>
+                                </div>
+                            </td>
                         </tr>
                         <tr>
                             <th>出勤・退勤</th>
                             <td>
-                                <label>出勤 <input type="time" name="punch_in" value="{{ $formatTime($punchIn) }}"></label>
-                                &nbsp;&nbsp;
-                                <label>退勤 <input type="time" name="punch_out" value="{{ $formatTime($punchOut) }}"></label>
+                                <!-- <div class="blocks-vertical"> -->
+                                    <div class="block">
+                                        <div class="block-inputs">
+                                            <input type="time" name="punch_in" value="{{ $formatTime($punchIn) }}">
+                                            <span>〜</span>
+                                            <input type="time" name="punch_out" value="{{ $formatTime($punchOut) }}">
+                                        </div>
+                                <!-- </div> -->
                             </td>
                         </tr>
-                        <tr>
-                            <th>休憩</th>
-                            <td>
-                                <label>開始 <input type="time" name="break1_start" value="{{ $formatTime($b1start) }}"></label>
-                                &nbsp;&nbsp;
-                                <label>終了 <input type="time" name="break1_end" value="{{ $formatTime($b1end) }}"></label>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>休憩2</th>
-                            <td>
-                                <label>開始 <input type="time" name="break2_start" value="{{ $formatTime($b2start) }}"></label>
-                                &nbsp;&nbsp;
-                                <label>終了 <input type="time" name="break2_end" value="{{ $formatTime($b2end) }}"></label>
-                            </td>
-                        </tr>
+                        @php
+                            $existingBreaks = [];
+                            foreach ($attendance->breakTime ?? [] as $bk) {
+                                $existingBreaks[] = [
+                                    'start' => isset($bk->breakIn) ? \Carbon\Carbon::parse($bk->breakIn)->format('H:i') : null,
+                                    'end' => isset($bk->breakOut) ? \Carbon\Carbon::parse($bk->breakOut)->format('H:i') : null,
+                                ];
+                            }
+                            $rows = max(1, count($existingBreaks)) + 1; // existing count + 1 empty
+                        @endphp
+                        @for($i = 0; $i < $rows; $i++)
+                            @php $val = $existingBreaks[$i] ?? ['start' => null, 'end' => null]; @endphp
+                            <tr>
+                                <th>{{ $i === 0 ? '休憩' : '休憩'.($i+1) }}</th>
+                                <td>
+                                    <!-- <div class="break-row-item"> -->
+                                    <div class="block">
+                                        <div class="block-inputs">
+                                            <input type="time" name="breaks[{{ $i }}][start]" value="{{ $val['start'] }}">
+                                            <span>〜</span>
+                                            <input type="time" name="breaks[{{ $i }}][end]" value="{{ $val['end'] }}">
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endfor
+
                         <tr>
                             <th>備考</th>
                             <td>
-                                <textarea name="note" rows="3" class="form-control" style="width:100%">{{ old('note', $note) }}</textarea>
+                                <textarea name="note" rows="3" class="form-control note-input">{{ old('note', $note) }}</textarea>
                             </td>
                         </tr>
-                        <tr>
+                        <!-- <tr>
                             <td colspan="2" class="text-end">
                                 <a href="{{ url()->previous() }}" class="btn btn-secondary">戻る</a>
-                                <button type="submit" class="btn btn-primary">保存</button>
+                                
                             </td>
-                        </tr>
+                        </tr> -->
                     </tbody>
                 </table>
+                <div class="correction-button">
+                        <button type="submit" class="btn btn-primary correction">修正</button>
+                </div>
             </form>
         @endif
 
