@@ -17,7 +17,8 @@
             // detect punch times
             $punchIn = $attendance->punchIn ?? $attendance->start_time ?? null;
             $punchOut = $attendance->punchOut ?? $attendance->end_time ?? null;
-            $note = $attendance->note ?? $attendance->memo ?? '';
+            // Use latest approval reason if provided (admin saved note stored as an approved Approval)
+            $note = (isset($latestApproval) && $latestApproval) ? ($latestApproval->reason ?? '') : ($attendance->note ?? $attendance->memo ?? '');
 
             // helper to format time for input[type=time]
             $formatTime = function($t) {
@@ -55,23 +56,17 @@
         @endphp
 
         @if($pendingApproval)
-            <div class="alert alert-warning">現在、この勤怠には承認待ちの変更申請があります。以下は申請された変更内容です（編集不可）。</div>
             <table class="table table-bordered">
                 <tbody>
                     <tr>
-                        <th style="width:160px">申請者</th>
+                        <td colspan="2" class="text-danger">承認まちのため修正できません</td>
+                    </tr>
+                    <tr>
+                        <th style="width:160px">名前</th>
                         <td>{{ $approval->name ?? $name }}</td>
                     </tr>
                     <tr>
-                        <th>申請日時</th>
-                        <td>{{ optional($approval->created_at)->format('Y-m-d H:i') }}</td>
-                    </tr>
-                    <tr>
-                        <th>状態</th>
-                        <td>承認待ち</td>
-                    </tr>
-                    <tr>
-                        <th>対象日</th>
+                        <th>日付</th>
                         <td>
                             <div class="date-blocks">
                                 <div class="block year-block">{{ isset($approval->target_date) ? \Carbon\Carbon::parse($approval->target_date)->format('Y') . '年' : $dateYear }}</div>
@@ -80,17 +75,13 @@
                         </td>
                     </tr>
                     <tr>
-                        <th>申請理由</th>
-                        <td>{{ $approval->reason ?? '—' }}</td>
-                    </tr>
-                    <tr>
                         <th>出勤・退勤</th>
                         <td>
-                            <div class="blocks">
-                                <div class="block">
-                                    <div> {{ $ap_punch_in ?? '—' }}</div>
+                            <div class="block">
+                                <div class="block-inputs">
+                                    <div class="block-time"> {{ $ap_punch_in ?? '—' }}</div>
                                     <span>〜</span>
-                                    <div> {{ $ap_punch_out ?? '—' }}</div>
+                                    <div class="block-time"> {{ $ap_punch_out ?? '—' }}</div>
                                 </div>
                             </div>
                         </td>
@@ -102,23 +93,29 @@
                         <tr>
                             <th>{{ $i === 0 ? '休憩' : '休憩'.($i+1) }}</th>
                             <td>
-                                <div class="blocks">
-                                    <div class="block">
-                                        <div>{{ is_array($b) ? (($b['start'] ?? '—') . ' - ' . ($b['end'] ?? '—')) : ($b ?? '—') }}</div>
+                                <div class="block">
+                                    <div class="block-inputs">
+                                        <div class="block-time">{{ is_array($b) ? ($b['start'] ?? '—') : ($b ?? '—') }}</div>
+                                        <span>〜</span>
+                                        <div class="block-time">{{ is_array($b) ? ($b['end'] ?? '—') : ($b ?? '—') }}</div>
                                     </div>
                                 </div>
                             </td>
                         </tr>
                     @endforeach
                     <tr>
-                        <td colspan="2" class="text-end">
-                            <a href="{{ url()->previous() }}" class="btn btn-secondary">戻る</a>
-                        </td>
+                        <th>備考</th>
+                        <td>{{ $approval->reason ?? '—' }}</td>
                     </tr>
                 </tbody>
             </table>
+            <div class="alert alert-warning">*承認待ちのため修正はできません。</div>
         @else
+            @if(auth('admin')->check())
+            <form method="POST" action="{{ url('/admin/attendance/'.$attendance->id) }}">
+            @else
             <form method="POST" action="{{ route('attendance.update', $attendance->id ?? '') }}">
+            @endif
                 @csrf
                 @method('PUT')
                 <table class="table table-bordered">
@@ -175,7 +172,6 @@
                                 </td>
                             </tr>
                         @endfor
-
                         <tr>
                             <th>備考</th>
                             <td>
@@ -185,7 +181,6 @@
                         <!-- <tr>
                             <td colspan="2" class="text-end">
                                 <a href="{{ url()->previous() }}" class="btn btn-secondary">戻る</a>
-                                
                             </td>
                         </tr> -->
                     </tbody>

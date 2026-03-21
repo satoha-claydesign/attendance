@@ -28,9 +28,11 @@ class AdminAttendanceController extends Controller
 
         $dateStr = $current->format('Y-m-d');
 
-        // load all users and timestamps for the date
-        $users = User::orderBy('name')->get();
-        $timestamps = Timestamp::with('breakTime')->where('work_date', $dateStr)->get()->keyBy('user_id');
+    // load timestamps for the date and only show users who have attendance records
+    $timestampsCollection = Timestamp::with(['breakTime'])->where('work_date', $dateStr)->get();
+    $timestamps = $timestampsCollection->keyBy('user_id');
+    $userIds = $timestampsCollection->pluck('user_id')->unique()->filter()->values();
+    $users = User::whereIn('id', $userIds)->orderBy('name')->get();
 
         return view('admin.attendance.list', compact('users', 'timestamps', 'current', 'prev', 'next', 'dateStr'));
     }
@@ -50,8 +52,22 @@ class AdminAttendanceController extends Controller
             ];
         })->toArray();
 
-        // Pass no approval so the detail view renders the editable form
-        return view('attendance.detail', ['attendance' => $attendance]);
+            // Check for pending approval for this timestamp
+            $pending = \App\Models\Approval::where('timestamp_id', $attendance->id)
+                ->where('status', 'pending')
+                ->first();
+
+            if ($pending) {
+                // If there's a pending approval, pass it to the view so it renders read-only
+                return view('attendance.detail', ['attendance' => $attendance, 'approval' => $pending]);
+            }
+
+            // No pending approval: also fetch latest approval (any status) to populate note
+            $latestApproval = \App\Models\Approval::where('timestamp_id', $attendance->id)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            return view('attendance.detail', ['attendance' => $attendance, 'latestApproval' => $latestApproval]);
     }
 
     /**
@@ -62,10 +78,17 @@ class AdminAttendanceController extends Controller
         $validated = $request->validate(array_merge([
             'punch_in' => 'nullable|date_format:H:i',
             'punch_out' => 'nullable|date_format:H:i',
-            'note' => 'nullable|string|max:1000',
         ], array_fill_keys(array_map(function($i){ return "breaks.$i.start"; }, range(0,9)), 'nullable|date_format:H:i')));
 
         $attendance = Timestamp::with('breakTime')->findOrFail($id);
+
+        // If there's a pending approval for this timestamp, block edits
+        $existingApproval = \App\Models\Approval::where('timestamp_id', $attendance->id)
+            ->where('status', 'pending')
+            ->first();
+        if ($existingApproval) {
+            return redirect('/admin/attendance/'.$id)->with('error', '承認まちのため修正できません');
+        }
 
         $workDate = $attendance->work_date;
 
@@ -103,11 +126,23 @@ class AdminAttendanceController extends Controller
             }
         }
 
-        if (array_key_exists('note', $validated)) {
-            $attendance->note = $validated['note'];
-            $attendance->save();
-        }
+            // If admin provided a note, record it into approvals as an approved note entry
+            if ($request->filled('note')) {
+                $noteText = $request->input('note');
+                \App\Models\Approval::create([
+                    'user_id' => $attendance->user_id,
+                    'timestamp_id' => $attendance->id,
+                    'name' => $attendance->user->name ?? null,
+                    'target_date' => $attendance->work_date,
+                    'status' => 'approved',
+                    'reason' => $noteText,
+                    'payload' => null,
+                    'details_link' => route('attendance.detail', $attendance->id),
+                    'approved_by' => auth('admin')->id() ?? null,
+                    'approved_at' => now(),
+                ]);
+            }
 
-        return redirect('/admin/attendance/list')->with('success', '勤怠を更新しました');
+        return redirect('/admin/attendance/'.$id)->with('success', '勤怠を更新しました');
     }
 }

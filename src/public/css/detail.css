@@ -123,6 +123,10 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     -webkit-appearance: none;
 }
 
+.block-time {
+    width: 10rem;
+}
+
 .note-input {
     font-family: inherit;
     font-size: 1rem;
@@ -149,6 +153,12 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     font-size: 18px;
     font-weight: bold;
     cursor: pointer;
+}
+
+.alert.alert-warning {
+    text-align: right;
+    color: #ff0000;
+    margin-top: 20px;
 }
 
 /* Responsive adjustments */
