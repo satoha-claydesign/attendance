@@ -67,13 +67,20 @@
             </tbody>
         </table>
 
-        {{-- Approve button only (no 戻る, no 却下) --}}
+        {{-- Approve button area: show actionable button when pending, otherwise show disabled approved label --}}
         <div class="text-end">
-            <form method="POST" action="{{ url('/stamp_correction_request/approve/'.$approval->id) }}" class="correction-button">
-                @csrf
-                <input type="hidden" name="action" value="approve">
-                <button type="submit" class="btn btn-primary correction">承認</button>
-            </form>
+            @if(isset($approval) && $approval->status === 'pending')
+                <form method="POST" action="{{ url('/stamp_correction_request/approve/'.$approval->id) }}" class="correction-button" style="display:inline-block">
+                    @csrf
+                    <input type="hidden" name="action" value="approve">
+                    <button type="submit" class="btn btn-primary correction">承認</button>
+                </form>
+            @elseif(isset($approval) && $approval->status === 'approved')
+                <button type="button" class="btn btn-primary correction approved">承認済み</button>
+            @else
+                {{-- Non-pending, non-approved (e.g., rejected) — show disabled label --}}
+                <button type="button" class="btn btn-secondary" disabled>{{ $approval->status ?? '処理済み' }}</button>
+            @endif
         </div>
     </div>
 </div>

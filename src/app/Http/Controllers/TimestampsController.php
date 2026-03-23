@@ -45,6 +45,25 @@ class TimestampsController extends Controller
         // Key attendances by work_date for quick lookup in view
         $attendanceByDate = $attendances->keyBy('work_date');
 
+        // Precompute break and work display strings per date to keep view simple
+        $breakDisplayByDate = [];
+        $workDisplayByDate = [];
+        foreach ($attendanceByDate as $date => $att) {
+            $breakTotal = 0;
+            foreach ($att->breakTime as $b) {
+                if ($b->breakIn && $b->breakOut) {
+                    $breakTotal += \Carbon\Carbon::parse($b->breakIn)->diffInMinutes(\Carbon\Carbon::parse($b->breakOut));
+                }
+            }
+            $breakDisplayByDate[$date] = $breakTotal > 0 ? (int)($breakTotal/60) . ':' . str_pad($breakTotal%60, 2, '0', STR_PAD_LEFT) : '0:00';
+            if ($att->punchIn && $att->punchOut) {
+                $workMinutes = \Carbon\Carbon::parse($att->punchIn)->diffInMinutes(\Carbon\Carbon::parse($att->punchOut)) - $breakTotal;
+                $workDisplayByDate[$date] = (int)($workMinutes/60) . ':' . str_pad($workMinutes%60, 2, '0', STR_PAD_LEFT);
+            } else {
+                $workDisplayByDate[$date] = '—';
+            }
+        }
+
         // Build list of days in month (ascending: start -> end)
         $numDays = $current->daysInMonth;
         $days = collect();
@@ -56,7 +75,7 @@ class TimestampsController extends Controller
         $prev = $current->copy()->subMonth();
         $next = $current->copy()->addMonth();
 
-        return view('attendance.list', compact('attendances', 'attendanceByDate', 'days', 'current', 'prev', 'next'));
+    return view('attendance.list', compact('attendances', 'attendanceByDate', 'days', 'current', 'prev', 'next', 'breakDisplayByDate', 'workDisplayByDate'));
     }
 
     public function punchIn()

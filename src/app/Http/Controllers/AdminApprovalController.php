@@ -34,6 +34,17 @@ class AdminApprovalController extends Controller
             return redirect()->route('login');
         }
 
+            // Add presentation helpers to each approval to reduce view logic
+            $approvals->each(function($ap){
+                $label = $ap->status;
+                if ($ap->status === 'pending') $label = '承認待ち';
+                elseif ($ap->status === 'approved') $label = '承認済み';
+                elseif ($ap->status === 'rejected') $label = '却下';
+                $ap->status_label = $label;
+                $ap->target_date_label = $ap->target_date ? \Carbon\Carbon::parse($ap->target_date)->format('Y/m/d') : '—';
+                $ap->created_at_label = optional($ap->created_at)->format('Y/m/d');
+            });
+
         return view('admin.approvals.index', compact('approvals', 'tab'));
     }
 
@@ -115,15 +126,15 @@ class AdminApprovalController extends Controller
             $approval->approved_at = now();
             $approval->save();
 
-            return redirect('/stamp_correction_request/list')->with('success', '申請を承認し、勤怠を更新しました。');
+            return redirect('/stamp_correction_request/approve/'.$approval->id)->with('success', '申請を承認し、勤怠を更新しました。');
         }
 
         // reject
-        $approval->status = 'rejected';
-        $approval->approved_by = auth('admin')->id() ?? auth()->id();
-        $approval->approved_at = now();
-        $approval->save();
+    $approval->status = 'rejected';
+    $approval->approved_by = auth('admin')->id() ?? auth()->id();
+    $approval->approved_at = now();
+    $approval->save();
 
-        return redirect('/stamp_correction_request/list')->with('success', '申請を却下しました。');
+    return redirect('/stamp_correction_request/approve/'.$approval->id)->with('success', '申請を却下しました。');
     }
 }

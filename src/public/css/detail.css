@@ -139,6 +139,9 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     margin-top: 1.5rem;
 }
 
+.text-end {
+    text-align: right;
+}
 .correction-button {
     text-align: right;
     margin: 1rem 0;
@@ -153,6 +156,13 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     font-size: 18px;
     font-weight: bold;
     cursor: pointer;
+
+}
+
+.correction.approved {
+    background-color: #696969;
+    cursor: default;
+    margin: 1rem 0;
 }
 
 .alert.alert-warning {

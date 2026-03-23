@@ -28,13 +28,36 @@ class AdminAttendanceController extends Controller
 
         $dateStr = $current->format('Y-m-d');
 
-    // load timestamps for the date and only show users who have attendance records
-    $timestampsCollection = Timestamp::with(['breakTime'])->where('work_date', $dateStr)->get();
-    $timestamps = $timestampsCollection->keyBy('user_id');
-    $userIds = $timestampsCollection->pluck('user_id')->unique()->filter()->values();
-    $users = User::whereIn('id', $userIds)->orderBy('name')->get();
+        // load timestamps for the date and only show users who have attendance records
+        $timestampsCollection = Timestamp::with(['breakTime'])->where('work_date', $dateStr)->get();
+        $timestamps = $timestampsCollection->keyBy('user_id');
+        $userIds = $timestampsCollection->pluck('user_id')->unique()->filter()->values();
+        $users = User::whereIn('id', $userIds)->orderBy('name')->get();
 
-        return view('admin.attendance.list', compact('users', 'timestamps', 'current', 'prev', 'next', 'dateStr'));
+        // Precompute per-user display values to keep the view simple
+        $breakDisplayByUser = [];
+        $workDisplayByUser = [];
+        $punchInByUser = [];
+        $punchOutByUser = [];
+        foreach ($timestamps as $uid => $ts) {
+            $breakTotal = 0;
+            foreach ($ts->breakTime as $b) {
+                if ($b->breakIn && $b->breakOut) {
+                    $breakTotal += \Carbon\Carbon::parse($b->breakIn)->diffInMinutes(\Carbon\Carbon::parse($b->breakOut));
+                }
+            }
+            $breakDisplayByUser[$uid] = $breakTotal > 0 ? (int)($breakTotal/60) . ':' . str_pad($breakTotal%60, 2, '0', STR_PAD_LEFT) : '0:00';
+            if ($ts->punchIn && $ts->punchOut) {
+                $workMinutes = \Carbon\Carbon::parse($ts->punchIn)->diffInMinutes(\Carbon\Carbon::parse($ts->punchOut)) - $breakTotal;
+                $workDisplayByUser[$uid] = (int)($workMinutes/60) . ':' . str_pad($workMinutes%60, 2, '0', STR_PAD_LEFT);
+            } else {
+                $workDisplayByUser[$uid] = '—';
+            }
+            $punchInByUser[$uid] = $ts->punchIn ? \Carbon\Carbon::parse($ts->punchIn)->format('H:i') : null;
+            $punchOutByUser[$uid] = $ts->punchOut ? \Carbon\Carbon::parse($ts->punchOut)->format('H:i') : null;
+        }
+
+    return view('admin.attendance.list', compact('users', 'timestamps', 'current', 'prev', 'next', 'dateStr', 'breakDisplayByUser', 'workDisplayByUser', 'punchInByUser', 'punchOutByUser'));
     }
 
     /**

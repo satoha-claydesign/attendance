@@ -28,34 +28,13 @@
             </thead>
             <tbody>
                 @foreach($users as $user)
-                    @php
-                        $ts = $timestamps[$user->id] ?? null;
-                        $breakDisplay = '0:00';
-                        $workDisplay = '—';
-                        $punchIn = null;
-                        $punchOut = null;
-                        if ($ts) {
-                            $punchIn = $ts->punchIn;
-                            $punchOut = $ts->punchOut;
-                            $breakTotal = 0;
-                            foreach($ts->breakTime as $b) {
-                                if($b->breakIn && $b->breakOut) {
-                                    $breakTotal += \Carbon\Carbon::parse($b->breakIn)->diffInMinutes(\Carbon\Carbon::parse($b->breakOut));
-                                }
-                            }
-                            $breakDisplay = $breakTotal > 0 ? (int)($breakTotal/60) . ':' . str_pad($breakTotal%60, 2, '0', STR_PAD_LEFT)  : '0:00';
-                            if($ts->punchIn && $ts->punchOut) {
-                                $workMinutes = \Carbon\Carbon::parse($ts->punchIn)->diffInMinutes(\Carbon\Carbon::parse($ts->punchOut)) - $breakTotal;
-                                $workDisplay = (int)($workMinutes/60) . ':' . str_pad($workMinutes%60, 2, '0', STR_PAD_LEFT);
-                            }
-                        }
-                    @endphp
+                    @php $ts = $timestamps[$user->id] ?? null; $uid = $user->id; @endphp
                     <tr>
                         <td data-label="名前">{{ $user->name }}</td>
-                        <td data-label="出勤">{{ $punchIn ? \Carbon\Carbon::parse($punchIn)->format('H:i') : '—' }}</td>
-                        <td data-label="退勤">{{ $punchOut ? \Carbon\Carbon::parse($punchOut)->format('H:i') : '—' }}</td>
-                        <td data-label="休憩">{{ $breakDisplay }}</td>
-                        <td data-label="合計">{{ $workDisplay }}</td>
+                        <td data-label="出勤">{{ $punchInByUser[$uid] ?? '—' }}</td>
+                        <td data-label="退勤">{{ $punchOutByUser[$uid] ?? '—' }}</td>
+                        <td data-label="休憩">{{ $breakDisplayByUser[$uid] ?? '0:00' }}</td>
+                        <td data-label="合計">{{ $workDisplayByUser[$uid] ?? '—' }}</td>
                         <td data-label="詳細">
                             @if($ts)
                                 <a class="attendance-link" href="{{ url('/admin/attendance/'.$ts->id) }}">詳細</a>

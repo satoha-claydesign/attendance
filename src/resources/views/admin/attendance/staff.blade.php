@@ -28,32 +28,14 @@
             </thead>
                 <tbody>
                     @foreach($days as $day)
-                        @php
-                            $dateStr = $day->format('Y-m-d');
-                            $attendance = $attendanceByDate[$dateStr] ?? null;
-                        @endphp
+                        @php $dateStr = $day->format('Y-m-d'); $attendance = $attendanceByDate[$dateStr] ?? null; @endphp
                         @if($attendance)
-                            @php
-                                $breakTotal = 0;
-                                foreach($attendance->breakTime as $b) {
-                                    if($b->breakIn && $b->breakOut) {
-                                        $breakTotal += \Carbon\Carbon::parse($b->breakIn)->diffInMinutes(\Carbon\Carbon::parse($b->breakOut));
-                                    }
-                                }
-                                $breakDisplay = $breakTotal > 0 ? (int)($breakTotal/60) . ':' . str_pad($breakTotal%60, 2, '0', STR_PAD_LEFT)  : '0:00';
-                                if($attendance->punchIn && $attendance->punchOut) {
-                                    $workMinutes = \Carbon\Carbon::parse($attendance->punchIn)->diffInMinutes(\Carbon\Carbon::parse($attendance->punchOut)) - $breakTotal;
-                                    $workDisplay = (int)($workMinutes/60) . ':' . str_pad($workMinutes%60, 2, '0', STR_PAD_LEFT);
-                                } else {
-                                    $workDisplay = '—';
-                                }
-                            @endphp
                             <tr>
                                 <td data-label="日付">{{ $day->locale('ja')->isoFormat('MM/DD (ddd)') }}</td>
                                 <td data-label="出勤">{{ $attendance->punchIn ? \Carbon\Carbon::parse($attendance->punchIn)->format('H:i') : '—' }}</td>
                                 <td data-label="退勤">{{ $attendance->punchOut ? \Carbon\Carbon::parse($attendance->punchOut)->format('H:i') : '—' }}</td>
-                                <td data-label="休憩">{{ $breakDisplay }}</td>
-                                <td data-label="合計">{{ $workDisplay }}</td>
+                                <td data-label="休憩">{{ $breakDisplayByDate[$dateStr] ?? '0:00' }}</td>
+                                <td data-label="合計">{{ $workDisplayByDate[$dateStr] ?? '—' }}</td>
                                 <td data-label="詳細"><a class="attendance-link" href="{{ url('/admin/attendance/'.$attendance->id) }}">詳細</a></td>
                             </tr>
                         @else
@@ -63,7 +45,7 @@
                                 <td data-label="退勤"> </td>
                                 <td data-label="休憩"> </td>
                                 <td data-label="合計"> </td>
-                                <td data-label="詳細"><a class="attendance-link" href="{{ route('attendance.detail') }}?date={{ $dateStr }}">詳細</a></td>
+                                <td data-label="詳細"><span class="attendance-link inactive">詳細</span></td>
                             </tr>
                         @endif
                     @endforeach

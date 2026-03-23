@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Timestamp;
 use App\Models\Approval;
+use Carbon\Carbon;
 
 class DetailController extends Controller
 {
@@ -27,7 +28,16 @@ class DetailController extends Controller
                 ->first();
         }
 
-        // Normalize breaks into a simple array the view expects
+        // Normalize breaks into a simple array the view expects and prepare formatted values
+        $approval = null;
+        $breaksForInput = [];
+        $punchInFormatted = '';
+        $punchOutFormatted = '';
+        $dateYear = '';
+        $dateMonthDay = '';
+        $rows = 2; // default rows for breaks inputs
+        $note = '';
+
         if ($attendance) {
             $attendance->breaks = $attendance->breakTime->map(function ($b) {
                 return [
@@ -35,10 +45,36 @@ class DetailController extends Controller
                     'end' => optional($b->breakOut)->format('H:i'),
                 ];
             })->toArray();
+
+            // formatted punch times for inputs
+            $punchInFormatted = $attendance->punchIn ? Carbon::parse($attendance->punchIn)->format('H:i') : '';
+            $punchOutFormatted = $attendance->punchOut ? Carbon::parse($attendance->punchOut)->format('H:i') : '';
+
+            // existing breaks for inputs
+            foreach ($attendance->breakTime as $bk) {
+                $breaksForInput[] = [
+                    'start' => $bk->breakIn ? Carbon::parse($bk->breakIn)->format('H:i') : null,
+                    'end' => $bk->breakOut ? Carbon::parse($bk->breakOut)->format('H:i') : null,
+                ];
+            }
+            $rows = max(1, count($breaksForInput)) + 1;
+
+            // derive date blocks
+            $dateVal = $attendance->work_date ?? ($attendance->date ?? ($attendance->created_at ? Carbon::parse($attendance->created_at)->format('Y-m-d') : null));
+            if ($dateVal) {
+                try {
+                    $dobj = Carbon::parse($dateVal);
+                    $dateYear = $dobj->format('Y') . '年';
+                    $dateMonthDay = $dobj->format('m') . '月' . $dobj->format('d') . '日';
+                } catch (\Exception $e) { }
+            }
+
+            // find latest approval for note population
+            $latestApproval = Approval::where('timestamp_id', $attendance->id)->orderBy('created_at', 'desc')->first();
+            $note = $latestApproval->reason ?? $attendance->note ?? $attendance->memo ?? '';
         }
 
         // Find any pending approval for this timestamp (or by date fallback)
-        $approval = null;
         if ($attendance && $attendance->id) {
             $approval = Approval::where('timestamp_id', $attendance->id)
                 ->where('status', 'pending')
@@ -53,6 +89,28 @@ class DetailController extends Controller
                 ->first();
         }
 
-        return view('attendance.detail', ['attendance' => $attendance, 'approval' => $approval]);
+        // If pending approval exists, prepare its formatted payload for read-only display
+        $ap_punch_in = null; $ap_punch_out = null; $ap_breaks = [];
+        if ($approval && $approval->payload) {
+            $pl = $approval->payload;
+            $ap_punch_in = $pl['punch_in'] ?? null;
+            $ap_punch_out = $pl['punch_out'] ?? null;
+            $ap_breaks = $pl['breaks'] ?? [];
+        }
+
+        return view('attendance.detail', [
+            'attendance' => $attendance,
+            'approval' => $approval,
+            'breaksForInput' => $breaksForInput,
+            'punchInFormatted' => $punchInFormatted,
+            'punchOutFormatted' => $punchOutFormatted,
+            'dateYear' => $dateYear,
+            'dateMonthDay' => $dateMonthDay,
+            'rows' => $rows,
+            'note' => $note,
+            'ap_punch_in' => $ap_punch_in,
+            'ap_punch_out' => $ap_punch_out,
+            'ap_breaks' => $ap_breaks,
+        ]);
     }
 }

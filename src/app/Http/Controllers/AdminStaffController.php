@@ -43,6 +43,25 @@ class AdminStaffController extends Controller
 
         $attendanceByDate = $attendances->keyBy('work_date');
 
+        // Precompute break/work display strings per date
+        $breakDisplayByDate = [];
+        $workDisplayByDate = [];
+        foreach ($attendanceByDate as $dt => $att) {
+            $breakTotal = 0;
+            foreach ($att->breakTime as $b) {
+                if ($b->breakIn && $b->breakOut) {
+                    $breakTotal += \Carbon\Carbon::parse($b->breakIn)->diffInMinutes(\Carbon\Carbon::parse($b->breakOut));
+                }
+            }
+            $breakDisplayByDate[$dt] = $breakTotal > 0 ? (int)($breakTotal/60) . ':' . str_pad($breakTotal%60, 2, '0', STR_PAD_LEFT) : '0:00';
+            if ($att->punchIn && $att->punchOut) {
+                $workMinutes = \Carbon\Carbon::parse($att->punchIn)->diffInMinutes(\Carbon\Carbon::parse($att->punchOut)) - $breakTotal;
+                $workDisplayByDate[$dt] = (int)($workMinutes/60) . ':' . str_pad($workMinutes%60, 2, '0', STR_PAD_LEFT);
+            } else {
+                $workDisplayByDate[$dt] = '—';
+            }
+        }
+
         $numDays = $current->daysInMonth;
         $days = collect();
         for ($i = 0; $i < $numDays; $i++) {
@@ -52,6 +71,6 @@ class AdminStaffController extends Controller
         $prev = $current->copy()->subMonth();
         $next = $current->copy()->addMonth();
 
-        return view('admin.attendance.staff', compact('user','attendances', 'attendanceByDate', 'days', 'current', 'prev', 'next'));
+    return view('admin.attendance.staff', compact('user','attendances', 'attendanceByDate', 'days', 'current', 'prev', 'next', 'breakDisplayByDate', 'workDisplayByDate'));
     }
 }

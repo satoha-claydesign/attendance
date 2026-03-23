@@ -30,19 +30,11 @@
             <tbody>
             @foreach($approvals as $ap)
                 <tr>
-                    <td data-label="状態">
-                        @php
-                            $statusLabel = $ap->status;
-                            if ($ap->status === 'pending') { $statusLabel = '承認待ち'; }
-                            elseif ($ap->status === 'approved') { $statusLabel = '承認済み'; }
-                            elseif ($ap->status === 'rejected') { $statusLabel = '却下'; }
-                        @endphp
-                        {{ $statusLabel }}
-                    </td>
+                    <td data-label="状態">{{ $ap->status_label ?? ($ap->status) }}</td>
                     <td data-label="名前">{{ $ap->name ?? ($ap->user->name ?? '—') }}</td>
-                    <td data-label="対象日時">{{ $ap->target_date ? \Carbon\Carbon::parse($ap->target_date)->format('Y/m/d') : '—' }}</td>
+                    <td data-label="対象日時">{{ $ap->target_date_label ?? '—' }}</td>
                     <td data-label="申請理由">{{ Str::limit($ap->reason ?? '—', 80) }}</td>
-                    <td data-label="申請日時">{{ optional($ap->created_at)->format('Y/m/d') }}</td>
+                    <td data-label="申請日時">{{ $ap->created_at_label ?? '' }}</td>
                     <td data-label="詳細">
                         <a class="attendance-link" href="{{ url('/stamp_correction_request/approve/'.$ap->id) }}">詳細</a>
                     </td>

@@ -10,57 +10,13 @@
         <h2>勤怠詳細</h2>
 
         @php
-            // normalize values
-            $breaks = $attendance->breaks ?? $attendance->break_times ?? [];
             $name = $attendance->user->name ?? ($attendance->name ?? '—');
-            $date = $attendance->work_date ?? ($attendance->date ?? ($attendance->created_at ? \Carbon\Carbon::parse($attendance->created_at)->format('Y-m-d') : '—'));
-            // detect punch times
-            $punchIn = $attendance->punchIn ?? $attendance->start_time ?? null;
-            $punchOut = $attendance->punchOut ?? $attendance->end_time ?? null;
-            // Use latest approval reason if provided (admin saved note stored as an approved Approval)
-            $note = (isset($latestApproval) && $latestApproval) ? ($latestApproval->reason ?? '') : ($attendance->note ?? $attendance->memo ?? '');
-
-            // helper to format time for input[type=time]
-            $formatTime = function($t) {
-                if(!$t) return '';
-                try { return \Carbon\Carbon::parse($t)->format('H:i'); } catch(\Exception $e) { return (string)$t; }
-            };
-
-            $break1 = $breaks[0] ?? null;
-            $break2 = $breaks[1] ?? null;
-            $b1start = is_array($break1) ? ($break1['start'] ?? null) : ($break1->start ?? $break1);
-            $b1end = is_array($break1) ? ($break1['end'] ?? null) : ($break1->end ?? null);
-            $b2start = is_array($break2) ? ($break2['start'] ?? null) : ($break2->start ?? $break2);
-            $b2end = is_array($break2) ? ($break2['end'] ?? null) : ($break2->end ?? null);
-            // split date into year and month-day blocks
-            try {
-                $dateObj = \Carbon\Carbon::parse($date);
-                $dateYear = $dateObj->format('Y') . '年';
-                $dateMonthDay = $dateObj->format('m') . '月' . $dateObj->format('d') . '日';
-            } catch (\Exception $e) {
-                $dateYear = '';
-                $dateMonthDay = $date;
-            }
-        @endphp
-
-        @php
             $pendingApproval = isset($approval) && $approval && ($approval->status === 'pending');
-            if ($pendingApproval) {
-                $ap = (array) $approval->payload;
-                $ap_punch_in = $ap['punch_in'] ?? null;
-                $ap_punch_out = $ap['punch_out'] ?? null;
-                $ap_breaks = $ap['breaks'] ?? [];
-                $ap_b1 = $ap_breaks[0] ?? null;
-                $ap_b2 = $ap_breaks[1] ?? null;
-            }
         @endphp
 
         @if($pendingApproval)
             <table class="table table-bordered">
                 <tbody>
-                    <tr>
-                        <td colspan="2" class="text-danger">承認まちのため修正できません</td>
-                    </tr>
                     <tr>
                         <th style="width:160px">名前</th>
                         <td>{{ $approval->name ?? $name }}</td>
@@ -136,28 +92,17 @@
                         <tr>
                             <th>出勤・退勤</th>
                             <td>
-                                <!-- <div class="blocks-vertical"> -->
-                                    <div class="block">
-                                        <div class="block-inputs">
-                                            <input type="time" name="punch_in" value="{{ $formatTime($punchIn) }}">
-                                            <span>〜</span>
-                                            <input type="time" name="punch_out" value="{{ $formatTime($punchOut) }}">
-                                        </div>
-                                <!-- </div> -->
+                                <div class="block">
+                                    <div class="block-inputs">
+                                        <input type="time" name="punch_in" value="{{ old('punch_in', $punchInFormatted ?? '') }}">
+                                        <span>〜</span>
+                                        <input type="time" name="punch_out" value="{{ old('punch_out', $punchOutFormatted ?? '') }}">
+                                    </div>
+                                </div>
                             </td>
                         </tr>
-                        @php
-                            $existingBreaks = [];
-                            foreach ($attendance->breakTime ?? [] as $bk) {
-                                $existingBreaks[] = [
-                                    'start' => isset($bk->breakIn) ? \Carbon\Carbon::parse($bk->breakIn)->format('H:i') : null,
-                                    'end' => isset($bk->breakOut) ? \Carbon\Carbon::parse($bk->breakOut)->format('H:i') : null,
-                                ];
-                            }
-                            $rows = max(1, count($existingBreaks)) + 1; // existing count + 1 empty
-                        @endphp
-                        @for($i = 0; $i < $rows; $i++)
-                            @php $val = $existingBreaks[$i] ?? ['start' => null, 'end' => null]; @endphp
+                        @for($i = 0; $i < ($rows ?? 2); $i++)
+                            @php $val = ($breaksForInput[$i] ?? ['start' => null, 'end' => null]); @endphp
                             <tr>
                                 <th>{{ $i === 0 ? '休憩' : '休憩'.($i+1) }}</th>
                                 <td>
