@@ -50,12 +50,12 @@
                         @if(Route::has('admin.logout'))
                             <form method="POST" action="{{ route('admin.logout') }}" style="display:inline">
                                 @csrf
-                                <button type="submit" class="header-nav__link" style="background:none;border:0;padding:0;cursor:pointer;">ログアウト</button>
+                                <button type="submit" class="header-nav__link" style="background:none;border:0;cursor:pointer;">ログアウト</button>
                             </form>
                         @elseif(Route::has('logout'))
                             <form method="POST" action="{{ route('logout') }}" style="display:inline">
                                 @csrf
-                                <button type="submit" class="header-nav__link" style="background:none;border:0;padding:0;cursor:pointer;">ログアウト</button>
+                                <button type="submit" class="header-nav__link" style="background:none;border:0;cursor:pointer;">ログアウト</button>
                             </form>
                         @else
                             <a class="header-nav__link" href="{{ url('/logout') }}">ログアウト</a>

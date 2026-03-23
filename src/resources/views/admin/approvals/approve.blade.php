@@ -7,69 +7,74 @@
 @section('content')
 <div class="main-container">
     <div class="container mt-4 attendance-detail">
-        <h2>修正申請承認</h2>
+        <h2>勤怠詳細</h2>
 
         @php
+            // normalize approval payload for reuse of the attendance detail read-only layout
             $ap = $approval;
             $payload = $approval->payload ?? [];
             $punchIn = $payload['punch_in'] ?? null;
             $punchOut = $payload['punch_out'] ?? null;
             $breaks = $payload['breaks'] ?? [];
-            $b1 = $breaks[0] ?? null;
-            $b2 = $breaks[1] ?? null;
         @endphp
 
+        {{-- Reuse the pending-approval (read-only) layout from attendance.detail --}}
         <table class="table table-bordered">
             <tbody>
                 <tr>
-                    <th style="width:160px">申請者</th>
+                    <th style="width:160px">名前</th>
                     <td>{{ $approval->name ?? ($approval->user->name ?? '—') }}</td>
                 </tr>
                 <tr>
-                    <th>申請日時</th>
-                    <td>{{ optional($approval->created_at)->format('Y-m-d H:i') }}</td>
-                </tr>
-                <tr>
-                    <th>状態</th>
-                    <td>{{ $approval->status }}</td>
-                </tr>
-                <tr>
-                    <th>対象日</th>
-                    <td>{{ $approval->target_date }}</td>
-                </tr>
-                <tr>
-                    <th>申請理由</th>
-                    <td>{{ $approval->reason ?? '—' }}</td>
-                </tr>
-                <tr>
-                    <th>申請された出勤・退勤</th>
-                    <td>出勤: {{ $punchIn ?? '—' }} &nbsp;&nbsp; 退勤: {{ $punchOut ?? '—' }}</td>
-                </tr>
-                <tr>
-                    <th>申請された休憩</th>
+                    <th>日付</th>
                     <td>
-                        休憩1: {{ is_array($b1) ? ($b1['start'] ?? '—') . ' - ' . ($b1['end'] ?? '—') : ($b1 ?? '—') }}<br>
-                        休憩2: {{ is_array($b2) ? ($b2['start'] ?? '—') . ' - ' . ($b2['end'] ?? '—') : ($b2 ?? '—') }}
+                        <div class="date-blocks">
+                            <div class="block year-block">{{ isset($approval->target_date) ? \Carbon\Carbon::parse($approval->target_date)->format('Y') . '年' : '' }}</div>
+                            <div class="block md-block">{{ isset($approval->target_date) ? \Carbon\Carbon::parse($approval->target_date)->format('m') . '月' . \Carbon\Carbon::parse($approval->target_date)->format('d') . '日' : '' }}</div>
+                        </div>
                     </td>
                 </tr>
                 <tr>
-                    <td colspan="2" class="text-end">
-                        <a href="{{ url('/stamp_correction_request/list') }}" class="btn btn-secondary">戻る</a>
-                        <form method="POST" action="{{ url('/stamp_correction_request/approve/'.$approval->id) }}" style="display:inline-block">
-                            @csrf
-                            <input type="hidden" name="action" value="approve">
-                            <button type="submit" class="btn btn-primary">承認する</button>
-                        </form>
-                        <form method="POST" action="{{ url('/stamp_correction_request/approve/'.$approval->id) }}" style="display:inline-block">
-                            @csrf
-                            <input type="hidden" name="action" value="reject">
-                            <button type="submit" class="btn btn-danger">却下する</button>
-                        </form>
+                    <th>出勤・退勤</th>
+                    <td>
+                        <div class="block">
+                            <div class="block-inputs">
+                                <div class="block-time"> {{ $punchIn ?? '—' }}</div>
+                                <span>〜</span>
+                                <div class="block-time"> {{ $punchOut ?? '—' }}</div>
+                            </div>
+                        </div>
                     </td>
+                </tr>
+                @foreach($breaks as $i => $b)
+                    <tr>
+                        <th>{{ $i === 0 ? '休憩' : '休憩'.($i+1) }}</th>
+                        <td>
+                            <div class="block">
+                                <div class="block-inputs">
+                                    <div class="block-time">{{ is_array($b) ? ($b['start'] ?? '—') : ($b ?? '—') }}</div>
+                                    <span>〜</span>
+                                    <div class="block-time">{{ is_array($b) ? ($b['end'] ?? '—') : ($b ?? '—') }}</div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                @endforeach
+                <tr>
+                    <th>備考</th>
+                    <td>{{ $approval->reason ?? '—' }}</td>
                 </tr>
             </tbody>
         </table>
 
+        {{-- Approve button only (no 戻る, no 却下) --}}
+        <div class="text-end">
+            <form method="POST" action="{{ url('/stamp_correction_request/approve/'.$approval->id) }}" class="correction-button">
+                @csrf
+                <input type="hidden" name="action" value="approve">
+                <button type="submit" class="btn btn-primary correction">承認</button>
+            </form>
+        </div>
     </div>
 </div>
 @endsection

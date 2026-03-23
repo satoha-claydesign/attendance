@@ -63,7 +63,7 @@
                                 <td data-label="退勤"> </td>
                                 <td data-label="休憩"> </td>
                                 <td data-label="合計"> </td>
-                                <td data-label="詳細"><a class="attendance-link" href="{{ route('attendance.detail') }}?date={{ $dateStr }}">詳細</a></td>
+                                <td data-label="詳細"><span class="attendance-link inactive">詳細</span></td>
                             </tr>
                         @endif
                     @endforeach

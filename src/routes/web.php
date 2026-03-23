@@ -20,7 +20,8 @@ use App\Http\Controllers\AdminAttendanceController;
 |
 */
 
-Route::get('/', [TimestampsController::class, 'index'])->name('attendance.index');
+// Redirect root to the authenticated attendance page so URL shows /attendance
+Route::redirect('/', '/attendance');
 
 Route::prefix('admin')->group(function () {
     Route::get('login', [LoginController::class, 'create'])->name('admin.login');

@@ -12,7 +12,7 @@
 .attendance-list-title{
     font-size: 32px;
     color: #222;
-    margin: 0; 
+    margin: 0 0 100px;
 }
 
 /* decorative vertical bar to the left of the title */
@@ -82,6 +82,14 @@ h2.attendance-list-title::before{
 }
 .attendance-link:hover{
     text-decoration: none;
+}
+
+/* inactive state for non-clickable detail cells */
+.attendance-link.inactive{
+  color: #9CA3AF; /* muted gray */
+  font-weight: 600;
+  cursor: default;
+  pointer-events: none;
 }
 
 /* responsive */
