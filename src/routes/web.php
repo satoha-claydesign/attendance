@@ -44,21 +44,28 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::put('/attendance/{id}', [TimestampsController::class, 'update'])->name('attendance.update');
 });
 
-// Admin-only approval routes at root path as requested
-Route::middleware('auth:admin')->group(function () {
-    Route::get('/stamp_correction_request/list', [AdminApprovalController::class, 'index']);
-    Route::get('/stamp_correction_request/approve/{id}', [AdminApprovalController::class, 'show']);
-    Route::post('/stamp_correction_request/approve/{id}', [AdminApprovalController::class, 'approve']);
-});
+// Admin-only approval POST (approve/reject). Listing and viewing are available to web users as well.
+Route::post('/stamp_correction_request/approve/{id}', [AdminApprovalController::class, 'approve'])->middleware('auth:admin');
 
-// Same path for general users (will be handled by controller which checks guards)
-Route::get('/stamp_correction_request/list', [AdminApprovalController::class, 'index']);
+// Listing is available to authenticated web users and admins (controller filters by guard).
+Route::get('/stamp_correction_request/list', [AdminApprovalController::class, 'index'])->middleware('auth');
+
+// Approval detail (show) should be accessible to authenticated users so users can view their own requests,
+// while POST remain admin-only. Use auth:web for regular users and admin may still access via their guard.
+Route::get('/stamp_correction_request/approve/{id}', [AdminApprovalController::class, 'show'])->middleware('auth');
 
 // Admin attendance list (daily)
 Route::middleware('auth:admin')->group(function () {
     Route::get('/admin/attendance/list', [AdminAttendanceController::class, 'index']);
     Route::get('/admin/attendance/{id}', [AdminAttendanceController::class, 'show']);
     Route::put('/admin/attendance/{id}', [AdminAttendanceController::class, 'update']);
+    // CSV export for staff monthly attendance
+    Route::get('/admin/attendance/staff/{id}/csv', [\App\Http\Controllers\AdminStaffController::class, 'exportCsv']);
+    // Admin-only approvals list (so admin menu links don't trigger web login)
+    Route::get('/admin/stamp_correction_request/list', [AdminApprovalController::class, 'index']);
+    // Admin view for a single approval (show) and admin-prefixed approve POST
+    Route::get('/admin/stamp_correction_request/approve/{id}', [AdminApprovalController::class, 'show']);
+    Route::post('/admin/stamp_correction_request/approve/{id}', [AdminApprovalController::class, 'approve']);
     // staff management
     Route::get('/admin/staff/list', [\App\Http\Controllers\AdminStaffController::class, 'index']);
     Route::get('/admin/attendance/staff/{id}', [\App\Http\Controllers\AdminStaffController::class, 'staffAttendance']);

@@ -73,4 +73,77 @@ class AdminStaffController extends Controller
 
     return view('admin.attendance.staff', compact('user','attendances', 'attendanceByDate', 'days', 'current', 'prev', 'next', 'breakDisplayByDate', 'workDisplayByDate'));
     }
+
+    /**
+     * Export monthly attendance for a given user as CSV
+     */
+    public function exportCsv(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $monthQuery = $request->query('month');
+        try {
+            $current = $monthQuery ? Carbon::createFromFormat('Y-m', $monthQuery)->startOfMonth() : Carbon::today()->startOfMonth();
+        } catch (\Exception $e) {
+            $current = Carbon::today()->startOfMonth();
+        }
+
+        $start = $current->copy()->startOfMonth()->toDateString();
+        $end = $current->copy()->endOfMonth()->toDateString();
+
+        $attendances = Timestamp::with('breakTime')
+            ->where('user_id', $user->id)
+            ->whereBetween('work_date', [$start, $end])
+            ->orderBy('work_date', 'asc')
+            ->get();
+
+        $filename = sprintf('%s_%s.csv', str_replace(' ', '_', $user->name), $current->format('Y-m'));
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        $columns = ['日付', '出勤', '退勤', '休憩合計', '勤務合計', '備考'];
+
+        $callback = function () use ($attendances, $columns) {
+            $out = fopen('php://output', 'w');
+            // UTF-8 BOM for Excel on Windows
+            fwrite($out, "\xEF\xBB\xBF");
+            fputcsv($out, $columns);
+
+            foreach ($attendances as $att) {
+                $date = $att->work_date;
+                $punchIn = $att->punchIn ? \Carbon\Carbon::parse($att->punchIn)->format('H:i') : '';
+                $punchOut = $att->punchOut ? \Carbon\Carbon::parse($att->punchOut)->format('H:i') : '';
+
+                $breakTotal = 0;
+                $breakParts = [];
+                foreach ($att->breakTime as $b) {
+                    if ($b->breakIn && $b->breakOut) {
+                        $mins = \Carbon\Carbon::parse($b->breakIn)->diffInMinutes(\Carbon\Carbon::parse($b->breakOut));
+                        $breakTotal += $mins;
+                        $breakParts[] = sprintf('%s-%s', \Carbon\Carbon::parse($b->breakIn)->format('H:i'), \Carbon\Carbon::parse($b->breakOut)->format('H:i'));
+                    }
+                }
+                $breakStr = $breakParts ? implode(' | ', $breakParts) : '';
+                $breakDisplay = $breakTotal > 0 ? (int)($breakTotal/60) . ':' . str_pad($breakTotal%60, 2, '0', STR_PAD_LEFT) : '0:00';
+
+                if ($att->punchIn && $att->punchOut) {
+                    $workMinutes = \Carbon\Carbon::parse($att->punchIn)->diffInMinutes(\Carbon\Carbon::parse($att->punchOut)) - $breakTotal;
+                    $workDisplay = (int)($workMinutes/60) . ':' . str_pad($workMinutes%60, 2, '0', STR_PAD_LEFT);
+                } else {
+                    $workDisplay = '';
+                }
+
+                $note = $att->note ?? '';
+
+                fputcsv($out, [$date, $punchIn, $punchOut, $breakDisplay, $workDisplay, $note]);
+            }
+
+            fclose($out);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

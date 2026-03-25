@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Http\Requests\CorrectRequest;
 use Auth;
 use Carbon\Carbon;
 use App\Models\User;
@@ -144,7 +145,7 @@ class TimestampsController extends Controller
      * Create an approval request for changes to a timestamp instead of applying immediately.
      * The admin will approve and apply changes later.
      */
-    public function update(Request $request, $id)
+    public function update(CorrectRequest $request, $id)
     {
         $user = auth()->user();
 
@@ -153,14 +154,8 @@ class TimestampsController extends Controller
             return redirect()->back()->with('error', '対象の勤怠が見つかりません。');
         }
 
-        $validated = $request->validate(array_merge([
-            'punch_in' => 'nullable|date_format:H:i',
-            'punch_out' => 'nullable|date_format:H:i',
-            'note' => 'nullable|string|max:1000',
-        ],
-        // allow dynamic breaks: breaks.*.start, breaks.*.end
-        array_fill_keys(array_map(function($i){ return "breaks.$i.start"; }, range(0,9)), 'nullable|date_format:H:i')
-        ));
+        // Use FormRequest validated data
+        $validated = $request->validated();
 
         $workDate = $timestamp->work_date;
 

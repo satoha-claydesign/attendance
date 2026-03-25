@@ -74,23 +74,74 @@ class AdminAttendanceController extends Controller
                 'end' => optional($b->breakOut)->format('H:i'),
             ];
         })->toArray();
+        // Prepare the same view variables as DetailController::detail so the attendance.detail
+        // view can be reused for admin editing (or read-only when pending).
+        $breaksForInput = [];
+        $punchInFormatted = '';
+        $punchOutFormatted = '';
+        $dateYear = '';
+        $dateMonthDay = '';
+        $rows = 2;
+        $note = '';
 
-            // Check for pending approval for this timestamp
-            $pending = \App\Models\Approval::where('timestamp_id', $attendance->id)
-                ->where('status', 'pending')
-                ->first();
+        if ($attendance) {
+            // formatted punch times for inputs
+            $punchInFormatted = $attendance->punchIn ? Carbon::parse($attendance->punchIn)->format('H:i') : '';
+            $punchOutFormatted = $attendance->punchOut ? Carbon::parse($attendance->punchOut)->format('H:i') : '';
 
-            if ($pending) {
-                // If there's a pending approval, pass it to the view so it renders read-only
-                return view('attendance.detail', ['attendance' => $attendance, 'approval' => $pending]);
+            // existing breaks for inputs
+            foreach ($attendance->breakTime as $bk) {
+                $breaksForInput[] = [
+                    'start' => $bk->breakIn ? Carbon::parse($bk->breakIn)->format('H:i') : null,
+                    'end' => $bk->breakOut ? Carbon::parse($bk->breakOut)->format('H:i') : null,
+                ];
+            }
+            $rows = max(1, count($breaksForInput)) + 1;
+
+            // derive date blocks
+            $dateVal = $attendance->work_date ?? ($attendance->date ?? ($attendance->created_at ? Carbon::parse($attendance->created_at)->format('Y-m-d') : null));
+            if ($dateVal) {
+                try {
+                    $dobj = Carbon::parse($dateVal);
+                    $dateYear = $dobj->format('Y') . '年';
+                    $dateMonthDay = $dobj->format('m') . '月' . $dobj->format('d') . '日';
+                } catch (\Exception $e) { }
             }
 
-            // No pending approval: also fetch latest approval (any status) to populate note
-            $latestApproval = \App\Models\Approval::where('timestamp_id', $attendance->id)
-                ->orderBy('created_at', 'desc')
-                ->first();
+            // find latest approval for note population
+            $latestApproval = \App\Models\Approval::where('timestamp_id', $attendance->id)->orderBy('created_at', 'desc')->first();
+            $note = $latestApproval->reason ?? $attendance->note ?? $attendance->memo ?? '';
+        }
 
-            return view('attendance.detail', ['attendance' => $attendance, 'latestApproval' => $latestApproval]);
+        // Find any pending approval for this timestamp
+        $pending = \App\Models\Approval::where('timestamp_id', $attendance->id)
+            ->where('status', 'pending')
+            ->latest()
+            ->first();
+
+        // If pending approval exists, prepare its formatted payload for read-only display
+        $ap_punch_in = null; $ap_punch_out = null; $ap_breaks = [];
+        if ($pending && $pending->payload) {
+            $pl = $pending->payload;
+            $ap_punch_in = $pl['punch_in'] ?? null;
+            $ap_punch_out = $pl['punch_out'] ?? null;
+            $ap_breaks = $pl['breaks'] ?? [];
+        }
+
+        return view('attendance.detail', [
+            'attendance' => $attendance,
+            'approval' => $pending,
+            'breaksForInput' => $breaksForInput,
+            'punchInFormatted' => $punchInFormatted,
+            'punchOutFormatted' => $punchOutFormatted,
+            'dateYear' => $dateYear,
+            'dateMonthDay' => $dateMonthDay,
+            'rows' => $rows,
+            'note' => $note,
+            'ap_punch_in' => $ap_punch_in,
+            'ap_punch_out' => $ap_punch_out,
+            'ap_breaks' => $ap_breaks,
+        ]);
     }
 
     /**

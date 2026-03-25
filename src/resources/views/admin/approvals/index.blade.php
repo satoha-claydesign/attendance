@@ -11,8 +11,13 @@
 
         <div class="month-nav">
             <div>
-                <a class="month-link {{ ($tab ?? 'pending') === 'pending' ? 'active' : '' }}" href="{{ url('/stamp_correction_request/list?tab=pending') }}">承認待ち</a>
-                <a class="month-link {{ ($tab ?? '') === 'approved' ? 'active' : '' }}" href="{{ url('/stamp_correction_request/list?tab=approved') }}">承認済み</a>
+                @if(auth('admin')->check())
+                    <a class="month-link {{ ($tab ?? 'pending') === 'pending' ? 'active' : '' }}" href="{{ url('/admin/stamp_correction_request/list?tab=pending') }}">承認待ち</a>
+                    <a class="month-link {{ ($tab ?? '') === 'approved' ? 'active' : '' }}" href="{{ url('/admin/stamp_correction_request/list?tab=approved') }}">承認済み</a>
+                @else
+                    <a class="month-link {{ ($tab ?? 'pending') === 'pending' ? 'active' : '' }}" href="{{ url('/stamp_correction_request/list?tab=pending') }}">承認待ち</a>
+                    <a class="month-link {{ ($tab ?? '') === 'approved' ? 'active' : '' }}" href="{{ url('/stamp_correction_request/list?tab=approved') }}">承認済み</a>
+                @endif
             </div>
         </div>
 
@@ -36,7 +41,11 @@
                     <td data-label="申請理由">{{ Str::limit($ap->reason ?? '—', 80) }}</td>
                     <td data-label="申請日時">{{ $ap->created_at_label ?? '' }}</td>
                     <td data-label="詳細">
-                        <a class="attendance-link" href="{{ url('/stamp_correction_request/approve/'.$ap->id) }}">詳細</a>
+                        @if(auth('admin')->check())
+                            <a class="attendance-link" href="{{ url('/admin/stamp_correction_request/approve/'.$ap->id) }}">詳細</a>
+                        @else
+                            <a class="attendance-link" href="{{ url('/stamp_correction_request/approve/'.$ap->id) }}">詳細</a>
+                        @endif
                     </td>
                 </tr>
             @endforeach

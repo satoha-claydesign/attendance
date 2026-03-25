@@ -200,3 +200,12 @@ input[type="time"]::-webkit-calendar-picker-indicator {
   .date-blocks, .blocks { width:100%; }
   .date-blocks .block, .blocks .block { width: 48%; }
 }
+
+.form__error {
+    color: #ff0000;
+    font-size: 16px;
+    margin: 0;
+    font-weight: normal;
+    padding: 0 0 0.5rem;
+    line-height: 0.8rem;
+}

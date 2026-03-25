@@ -1,3 +1,20 @@
 @import url('/css/attendancelist.css');
 
 /* admin-specific tweaks can go here */
+
+.csv-export {
+    text-align: right;
+    margin: 2rem 0;
+}
+
+.btn-secondary {
+    padding: 0.8rem 3.5rem;
+    border-radius: 4px;
+    background-color: #000;
+    color: #fff;
+    border: none;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+}

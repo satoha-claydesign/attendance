@@ -19,12 +19,15 @@ class AdminApprovalController extends Controller
         $tab = request()->query('tab', 'pending');
         $statusFilter = $tab === 'approved' ? ['approved','rejected'] : ['pending'];
 
-        if (auth('admin')->check()) {
+        // Decide whether this request is for admin or regular user.
+        // If admin guard is authenticated OR the request is under the admin prefix, treat as admin.
+        if (auth('admin')->check() || request()->is('admin/*')) {
             $approvals = Approval::with('user', 'timestamp')
                 ->whereIn('status', $statusFilter)
                 ->orderBy('created_at', 'desc')
                 ->get();
         } elseif (auth()->check()) {
+            // Regular users only see their own approvals
             $approvals = Approval::with('timestamp')
                 ->where('user_id', auth()->id())
                 ->whereIn('status', $statusFilter)
@@ -126,7 +129,9 @@ class AdminApprovalController extends Controller
             $approval->approved_at = now();
             $approval->save();
 
-            return redirect('/stamp_correction_request/approve/'.$approval->id)->with('success', '申請を承認し、勤怠を更新しました。');
+            // Redirect back to the appropriate approval detail route depending on guard/prefix
+            $prefix = (auth('admin')->check() || request()->is('admin/*')) ? '/admin' : '';
+            return redirect($prefix.'/stamp_correction_request/approve/'.$approval->id)->with('success', '申請を承認し、勤怠を更新しました。');
         }
 
         // reject
@@ -135,6 +140,7 @@ class AdminApprovalController extends Controller
     $approval->approved_at = now();
     $approval->save();
 
-    return redirect('/stamp_correction_request/approve/'.$approval->id)->with('success', '申請を却下しました。');
+    $prefix = (auth('admin')->check() || request()->is('admin/*')) ? '/admin' : '';
+    return redirect($prefix.'/stamp_correction_request/approve/'.$approval->id)->with('success', '申請を却下しました。');
     }
 }

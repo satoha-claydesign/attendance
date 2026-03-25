@@ -98,11 +98,26 @@
                                         <span>〜</span>
                                         <input type="time" name="punch_out" value="{{ old('punch_out', $punchOutFormatted ?? '') }}">
                                     </div>
+                                    @php
+                                        $punchErr = $errors->first('punch_in') ?: $errors->first('punch_out');
+                                    @endphp
+                                    @if($punchErr)
+                                        <p class="form__error">{{ $punchErr }}</p>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
                         @for($i = 0; $i < ($rows ?? 2); $i++)
-                            @php $val = ($breaksForInput[$i] ?? ['start' => null, 'end' => null]); @endphp
+                            @php
+                                // default
+                                $val = ['start' => null, 'end' => null];
+
+                                // Use data_get which works for arrays, objects and Collections
+                                $tmp = data_get($breaksForInput, $i, null);
+                                if ($tmp !== null) {
+                                    $val = is_array($tmp) ? $tmp : (array) $tmp;
+                                }
+                            @endphp
                             <tr>
                                 <th>{{ $i === 0 ? '休憩' : '休憩'.($i+1) }}</th>
                                 <td>
@@ -114,20 +129,28 @@
                                             <input type="time" name="breaks[{{ $i }}][end]" value="{{ $val['end'] }}">
                                         </div>
                                     </div>
+                                    @php
+                                        $breakErr = $errors->first("breaks.$i.start") ?: $errors->first("breaks.$i.end");
+                                    @endphp
+                                    @if($breakErr)
+                                        <p class="form__error">{{ $breakErr }}</p>
+                                    @endif
                                 </td>
                             </tr>
+                            
                         @endfor
                         <tr>
                             <th>備考</th>
                             <td>
                                 <textarea name="note" rows="3" class="form-control note-input">{{ old('note', $note) }}</textarea>
+                                <p class="form__error">
+                                    @error('note')
+                                    {{ $message }}
+                                    @enderror
+                                </p>
                             </td>
                         </tr>
-                        <!-- <tr>
-                            <td colspan="2" class="text-end">
-                                <a href="{{ url()->previous() }}" class="btn btn-secondary">戻る</a>
-                            </td>
-                        </tr> -->
+                        
                     </tbody>
                 </table>
                 <div class="correction-button">

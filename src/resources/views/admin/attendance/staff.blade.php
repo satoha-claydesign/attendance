@@ -51,6 +51,10 @@
                     @endforeach
                 </tbody>
         </table>
+        <div class="csv-export">
+            @php $monthParam = $current->format('Y-m'); @endphp
+            <a href="{{ url('/admin/attendance/staff/'.$user->id.'/csv') }}?month={{ $monthParam }}" class="btn btn-secondary" role="button">CSV出力</a>
+        </div>
     </div>
 </div>
 @endsection
