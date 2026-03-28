@@ -9,18 +9,13 @@ use Carbon\Carbon;
 
 class AdminStaffController extends Controller
 {
-    /**
-     * Show staff list for admins
-     */
+
     public function index()
     {
         $users = User::orderBy('name')->get();
         return view('admin.staff.list', compact('users'));
     }
 
-    /**
-     * Show monthly attendance for a given user (admin view)
-     */
     public function staffAttendance(Request $request, $id)
     {
         $user = User::findOrFail($id);
@@ -74,9 +69,6 @@ class AdminStaffController extends Controller
     return view('admin.attendance.staff', compact('user','attendances', 'attendanceByDate', 'days', 'current', 'prev', 'next', 'breakDisplayByDate', 'workDisplayByDate'));
     }
 
-    /**
-     * Export monthly attendance for a given user as CSV
-     */
     public function exportCsv(Request $request, $id)
     {
         $user = User::findOrFail($id);

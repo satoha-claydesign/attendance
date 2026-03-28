@@ -9,13 +9,9 @@ use Carbon\Carbon;
 
 class AdminAttendanceController extends Controller
 {
-    /**
-     * Show attendance list for a specific date for admins.
-     * Date passed as query 'date' in Y-m-d format; defaults to today.
-     */
+
     public function index(Request $request)
     {
-        // only admin middleware will allow access in routes
         $dateQuery = $request->query('date');
         try {
             $current = $dateQuery ? Carbon::createFromFormat('Y-m-d', $dateQuery) : Carbon::today();
@@ -28,13 +24,11 @@ class AdminAttendanceController extends Controller
 
         $dateStr = $current->format('Y-m-d');
 
-        // load timestamps for the date and only show users who have attendance records
         $timestampsCollection = Timestamp::with(['breakTime'])->where('work_date', $dateStr)->get();
         $timestamps = $timestampsCollection->keyBy('user_id');
         $userIds = $timestampsCollection->pluck('user_id')->unique()->filter()->values();
         $users = User::whereIn('id', $userIds)->orderBy('name')->get();
 
-        // Precompute per-user display values to keep the view simple
         $breakDisplayByUser = [];
         $workDisplayByUser = [];
         $punchInByUser = [];
@@ -60,22 +54,17 @@ class AdminAttendanceController extends Controller
     return view('admin.attendance.list', compact('users', 'timestamps', 'current', 'prev', 'next', 'dateStr', 'breakDisplayByUser', 'workDisplayByUser', 'punchInByUser', 'punchOutByUser'));
     }
 
-    /**
-     * Show editable detail for a timestamp (admin can edit directly)
-     */
     public function show(Request $request, $id)
     {
         $attendance = Timestamp::with(['user', 'breakTime'])->findOrFail($id);
 
-        // Normalize breaks for the detail view
         $attendance->breaks = $attendance->breakTime->map(function ($b) {
             return [
                 'start' => optional($b->breakIn)->format('H:i'),
                 'end' => optional($b->breakOut)->format('H:i'),
             ];
         })->toArray();
-        // Prepare the same view variables as DetailController::detail so the attendance.detail
-        // view can be reused for admin editing (or read-only when pending).
+
         $breaksForInput = [];
         $punchInFormatted = '';
         $punchOutFormatted = '';
@@ -113,13 +102,11 @@ class AdminAttendanceController extends Controller
             $note = $latestApproval->reason ?? $attendance->note ?? $attendance->memo ?? '';
         }
 
-        // Find any pending approval for this timestamp
         $pending = \App\Models\Approval::where('timestamp_id', $attendance->id)
             ->where('status', 'pending')
             ->latest()
             ->first();
 
-        // If pending approval exists, prepare its formatted payload for read-only display
         $ap_punch_in = null; $ap_punch_out = null; $ap_breaks = [];
         if ($pending && $pending->payload) {
             $pl = $pending->payload;

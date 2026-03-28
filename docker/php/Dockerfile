@@ -11,3 +11,7 @@ RUN curl -sS https://getcomposer.org/installer | php \
     && composer self-update
 
 WORKDIR /var/www
+
+# Ensure php-fpm listens on all IPv4 interfaces for container networking
+# (use 0.0.0.0:9000 so nginx can connect via the 'php' service name).
+RUN sed -i "s|^listen = .*|listen = 0.0.0.0:9000|" /usr/local/etc/php-fpm.d/www.conf || true

@@ -10,24 +10,18 @@ use Carbon\Carbon;
 
 class AdminApprovalController extends Controller
 {
-    /**
-     * List pending approvals
-     */
+
     public function index()
     {
-        // tab can be 'pending' or 'approved' (approved includes 'approved' and 'rejected'?)
         $tab = request()->query('tab', 'pending');
         $statusFilter = $tab === 'approved' ? ['approved','rejected'] : ['pending'];
 
-        // Decide whether this request is for admin or regular user.
-        // If admin guard is authenticated OR the request is under the admin prefix, treat as admin.
         if (auth('admin')->check() || request()->is('admin/*')) {
             $approvals = Approval::with('user', 'timestamp')
                 ->whereIn('status', $statusFilter)
                 ->orderBy('created_at', 'desc')
                 ->get();
         } elseif (auth()->check()) {
-            // Regular users only see their own approvals
             $approvals = Approval::with('timestamp')
                 ->where('user_id', auth()->id())
                 ->whereIn('status', $statusFilter)
@@ -37,7 +31,6 @@ class AdminApprovalController extends Controller
             return redirect()->route('login');
         }
 
-            // Add presentation helpers to each approval to reduce view logic
             $approvals->each(function($ap){
                 $label = $ap->status;
                 if ($ap->status === 'pending') $label = '承認待ち';
@@ -51,14 +44,10 @@ class AdminApprovalController extends Controller
         return view('admin.approvals.index', compact('approvals', 'tab'));
     }
 
-    /**
-     * Show approval detail (read-only) — same look as user detail
-     */
     public function show($id)
     {
         $approval = Approval::with('user', 'timestamp')->findOrFail($id);
 
-        // Build a fake attendance shape to reuse the detail view UI
         $attendance = null;
         if ($approval->timestamp) {
             $attendance = $approval->timestamp->load('breakTime');
@@ -73,9 +62,6 @@ class AdminApprovalController extends Controller
         return view('admin.approvals.approve', ['approval' => $approval, 'attendance' => $attendance]);
     }
 
-    /**
-     * Approve or reject the request. POST action.
-     */
     public function approve(Request $request, $id)
     {
         $approval = Approval::findOrFail($id);
@@ -104,7 +90,6 @@ class AdminApprovalController extends Controller
                 ]);
             }
 
-            // Update punch times
             if (isset($payload['punch_in'])) {
                 $timestamp->punchIn = $payload['punch_in'] ? Carbon::createFromFormat('Y-m-d H:i', $targetDate.' '.$payload['punch_in']) : null;
             }
@@ -113,7 +98,6 @@ class AdminApprovalController extends Controller
             }
             $timestamp->save();
 
-            // Append payload breaks to existing break records (do not delete existing)
             $breaks = $payload['breaks'] ?? [];
             foreach ($breaks as $b) {
                 if ((!empty($b['start'])) || (!empty($b['end']))) {
@@ -129,7 +113,6 @@ class AdminApprovalController extends Controller
             $approval->approved_at = now();
             $approval->save();
 
-            // Redirect back to the appropriate approval detail route depending on guard/prefix
             $prefix = (auth('admin')->check() || request()->is('admin/*')) ? '/admin' : '';
             return redirect($prefix.'/stamp_correction_request/approve/'.$approval->id)->with('success', '申請を承認し、勤怠を更新しました。');
         }

@@ -137,7 +137,6 @@
                                     @endif
                                 </td>
                             </tr>
-                            
                         @endfor
                         <tr>
                             <th>備考</th>
@@ -150,7 +149,6 @@
                                 </p>
                             </td>
                         </tr>
-                        
                     </tbody>
                 </table>
                 <div class="correction-button">
@@ -158,51 +156,6 @@
                 </div>
             </form>
         @endif
-
-        {{-- 複数レコードを一覧で表示したい場合の例（コメント） --}}
-        {{--
-        <table class="table table-striped">
-            <thead>
-            <tr><th>氏名</th><th>日付</th><th>出勤時間</th><th>退勤時間</th><th>休憩時間</th></tr>
-            </thead>
-            <tbody>
-            @foreach($attendances as $item)
-                @php
-                $bks = $item->breaks ?? $item->break_times ?? [];
-                @endphp
-                @if(empty($bks))
-                <tr>
-                    <td>{{ $item->user->name ?? ($item->name ?? '—') }}</td>
-                    <td>{{ $item->date ?? $item->created_at }}</td>
-                    <td>{{ $item->start_time ?? '—' }}</td>
-                    <td>{{ $item->end_time ?? '—' }}</td>
-                    <td>—</td>
-                </tr>
-                @else
-                @foreach($bks as $i => $bk)
-                    <tr>
-                    @if($i === 0)
-                        <td>{{ $item->user->name ?? ($item->name ?? '—') }}</td>
-                        <td>{{ $item->date ?? $item->created_at }}</td>
-                        <td>{{ $item->start_time ?? '—' }}</td>
-                        <td>{{ $item->end_time ?? '—' }}</td>
-                    @else
-                        <td></td><td></td><td></td><td></td>
-                    @endif
-                    <td>
-                        @if(is_array($bk) || is_object($bk))
-                        {{ $bk['start'] ?? $bk->start ?? '—' }} @if(($bk['end'] ?? $bk->end ?? null)) - {{ $bk['end'] ?? $bk->end }} @endif
-                        @else
-                        {{ $bk }}
-                        @endif
-                    </td>
-                    </tr>
-                @endforeach
-                @endif
-            @endforeach
-            </tbody>
-        </table>
-        --}}
 
     </div>
 </div>

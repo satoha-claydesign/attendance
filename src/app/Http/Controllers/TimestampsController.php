@@ -141,17 +141,13 @@ class TimestampsController extends Controller
         return redirect()->back();
     }
 
-    /**
-     * Create an approval request for changes to a timestamp instead of applying immediately.
-     * The admin will approve and apply changes later.
-     */
     public function update(CorrectRequest $request, $id)
     {
         $user = auth()->user();
 
         $timestamp = Timestamp::with('breakTime')->where('id', $id)->where('user_id', $user->id)->first();
         if (! $timestamp) {
-            return redirect()->back()->with('error', '対象の勤怠が見つかりません。');
+            return redirect()->back();
         }
 
         // Use FormRequest validated data
@@ -191,6 +187,6 @@ class TimestampsController extends Controller
             'details_link' => route('attendance.detail', $timestamp->id),
         ]);
 
-        return redirect()->route('attendance.detail', $timestamp->id)->with('success', '変更を申請しました。管理者の承認をお待ちください。');
+        return redirect()->route('attendance.detail', $timestamp->id);
     }
 }
