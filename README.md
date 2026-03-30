@@ -67,20 +67,55 @@ php artisan db:seed
 php artisan storage:link
 ```
 
-
 ## 使用技術(実行環境)
 
-* PHP 8.4.13
-* Laravel 8.83.29
-* MySQL 8.0.26
-* nginx 1.12.1
+- PHP 8.4.13
+- Laravel 8.83.29
+- MySQL 8.0.26
+- nginx 1.12.1
 
 ## ER 図
 
 ![alt](attendance_table.png)
 
+## テスト (PHPUnit)
+
+ローカルで PHPUnit を使ってテストを実行する手順の例を記載します。テスト用データベースを作成し、テスト環境でマイグレーションを実行してから PHPUnit を走らせます。
+
+1. MySQL コンテナに入る
+
+```bash
+docker-compose exec mysql bash
+```
+
+2. MySQL に接続（root パスワードはプロジェクト構成により異なります。ローカルセットアップではパスワードに `root` を使う場合があります）
+
+```sql
+mysql -u root -p
+```
+
+（プロンプトが出たらパスワードを入力してください。例: root）
+
+3. テスト用データベースを作成
+
+```sql
+create database test_database;
+```
+
+4. PHP コンテナに入り、テスト環境でマイグレーション実行
+
+```bash
+docker-compose exec php bash
+php artisan migrate:fresh --env=testing
+```
+
+5. PHPUnit を実行
+
+```bash
+./vendor/bin/phpunit
+```
+
 ## URL
 
 - 開発環境：http://localhost/
 - phpMyAdmin:：http://localhost:8080/
-

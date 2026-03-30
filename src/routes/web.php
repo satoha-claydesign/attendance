@@ -8,6 +8,7 @@ use App\Http\Controllers\TimestampsController;
 use App\Http\Controllers\DetailController;
 use App\Http\Controllers\AdminApprovalController;
 use App\Http\Controllers\AdminAttendanceController;
+use App\Http\Controllers\AdminStaffController;
 
 /*
 |--------------------------------------------------------------------------
@@ -59,7 +60,7 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('/admin/stamp_correction_request/list', [AdminApprovalController::class, 'index']);
     Route::get('/admin/stamp_correction_request/approve/{id}', [AdminApprovalController::class, 'show']);
     Route::post('/admin/stamp_correction_request/approve/{id}', [AdminApprovalController::class, 'approve']);
-    Route::get('/admin/staff/list', [\App\Http\Controllers\AdminStaffController::class, 'index']);
-    Route::get('/admin/attendance/staff/{id}', [\App\Http\Controllers\AdminStaffController::class, 'staffAttendance']);
+    Route::get('/admin/staff/list', [AdminStaffController::class, 'index']);
+    Route::get('/admin/attendance/staff/{id}', [AdminStaffController::class, 'staffAttendance']);
 });
 
