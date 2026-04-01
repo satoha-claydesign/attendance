@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-// AdminDashboardController removed (dashboard not needed)
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\TimestampsController;
 use App\Http\Controllers\DetailController;
