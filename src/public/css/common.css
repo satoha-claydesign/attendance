@@ -78,3 +78,7 @@ button.header-nav__link {
     font-size: 14px;
     box-shadow: #ddd 2px 2px 4px;
 }
+
+.main-container {
+    height: 98vh;
+}
