@@ -16,10 +16,12 @@ class UserSeeder extends Seeder
     public function run()
     {
         //
-        User::create([
+        User::updateOrCreate(
+            [
             'name' => '一般ユーザー',
             'email' => 'user@user.user',
             'password' => Hash::make('password'),
+            'email_verified_at' => now()
         ]);
     }
 }

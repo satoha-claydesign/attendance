@@ -58,13 +58,27 @@ php artisan migrate
 7. シーディングの実行
 
 ```bash
-php artisan db:seed
+php artisan migrate:fresh --seed
 ```
 
 8. シンボリックリンクの作成
 
 ```bash
 php artisan storage:link
+```
+
+9. テストアカウント
+一般ユーザーアカウント
+```bash
+名前：一般ユーザー
+メールアドレス； user@user.user
+パスワード：password
+```
+管理者アカウント
+```bash
+名前：管理者
+メールアドレス； admin@admin.admin
+パスワード：password
 ```
 
 ## 使用技術(実行環境)
